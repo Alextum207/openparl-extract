@@ -173,3 +173,41 @@ def test_ingest_primary_doc_wrong_id(tmp_path):
     for bad in (3, 99):  # html doc, unknown doc
         with pytest.raises(ValueError):
             ingest_affair(client(two_pdf_handler([])), 5, tmp_path, primary_doc_id=bad)
+
+
+# ---- duplicates: overlapping random offsets, same affair in two bodies ----
+SMALL = [b for b in BODIES if b["body_key"] in ("ZH", "BE")]
+
+
+def small_handler(req):
+    if req.url.path == "/v1/bodies/":
+        return httpx.Response(200, json={"data": SMALL, "meta": {"has_more": False}})
+    q = dict(req.url.params)
+    off, lim, bk = int(q["offset"]), int(q["limit"]), q["body_key"]
+    rows = []
+    for i in range(off, min(off + lim, 60)):  # 60 rows only: random offsets overlap heavily
+        a = affair(bk, i, "de")
+        a["id"] = 5000 + i  # SAME ids in both bodies -> cross-body duplicates
+        a["docs"]["data"][0]["id"], a["docs"]["data"][1]["id"] = a["id"] * 10, a["id"] * 10 + 1
+        rows.append(a)
+    return httpx.Response(200, json={"data": rows, "meta": {"has_more": off + lim < 60, "total_records": 60}})
+
+
+def test_no_duplicate_affairs_small_overlapping_bodies():
+    c = OpenParlDataClient(base_url="http://api.test", transport=httpx.MockTransport(small_handler), delay=0)
+    entries, s = pick_corpus(c, n_total=9, seed=3, page_size=50, pages_per_body=3)
+    ids = [e.affair_id for e in entries]
+    assert len(ids) == len(set(ids)) and s["n"] == len(ids) == sum(s["level"].values())
+    assert sum(s["language"].values()) == sum(s["affair_type"].values()) == len(ids)
+    assert s["duplicates_skipped"] > 0 and "duplicates_skipped" in format_summary(s)
+
+
+def test_select_skips_duplicate_pool_entries():
+    import random
+
+    from openparl_extract.evaluate.corpus import Cand, _select
+    e = CorpusEntry(affair_id=1, body_key="ZH", level="cantonal", language="de", affair_type="motion", doc_id=1,
+                    n_pdf_docs=1, has_plain_text=True, scanned_guess=False, lifecycle_complete=True, reason="")
+    cell = ("cantonal", "de")
+    out = _select({cell: [Cand(e, 1, 0), Cand(e, 1, 1)]}, {cell: 2}, 2, random.Random(1))
+    assert [x.affair_id for x in out] == [1]

@@ -209,7 +209,7 @@ def pick_corpus(client: OpenParlDataClient, n_total: int = 45, seed: int = 7, ma
             return pages_per_body * FEDERAL_PAGE_FACTOR
         return pages_per_body
 
-    n_cand = 0
+    n_cand, seen_ids, dups = 0, set(), 0
     try:
         while True:
             def full(c):  # enough candidates AND from enough different parliaments
@@ -240,6 +240,10 @@ def pick_corpus(client: OpenParlDataClient, n_total: int = 45, seed: int = 7, ma
                     page = call(client.list_affairs, body_key=key, limit=page_size, offset=off, expand_docs=True)
                     total = total or page["meta"].get("total_records")
                     for a in page["data"]:
+                        if a["id"] in seen_ids:  # overlapping windows / same affair via another body
+                            dups += 1
+                            continue
+                        seen_ids.add(a["id"])
                         c = evaluate_candidate(a, body, lv)
                         if c and (lv.value, c.entry.language) in pool:
                             c.order, n_cand, found = n_cand, n_cand + 1, found + 1
@@ -268,7 +272,8 @@ def pick_corpus(client: OpenParlDataClient, n_total: int = 45, seed: int = 7, ma
     summary |= {"n": len(entries), "requests": state["calls"],
                 "level": {k: sum(e.level.value == k for e in entries) for k in LEVELS},
                 "language": count(lambda e: e.language), "scanned_guess": sum(e.scanned_guess for e in entries),
-                "affair_type": count(lambda e: e.affair_type), "body": count(lambda e: e.body_key), "unmet": unmet}
+                "affair_type": count(lambda e: e.affair_type), "body": count(lambda e: e.body_key), "unmet": unmet,
+                "duplicates_skipped": dups}
     return entries, summary
 
 
@@ -277,18 +282,20 @@ def _select(pool, quota, n_total, rng) -> list[CorpusEntry]:
         rng.shuffle(c)  # shuffle first, every later min() is order-stable
     type_cap = max(1, math.ceil(TYPE_MAX_SHARE * n_total))
     types: dict[str, int] = {}
+    chosen: set[int] = set()  # never the same affair twice, even if the pool held duplicates
     picked: dict[tuple[str, str], list[Cand]] = {c: [] for c in quota}
 
     def take(cell, scanned_only: bool, limit: int, capped: bool = True):
         cap = body_cap(cell, quota[cell]) if capped else quota[cell]
         while len(picked[cell]) < limit:
-            ok = [c for c in pool[cell] if c not in picked[cell] and (c.entry.scanned_guess or not scanned_only)
+            ok = [c for c in pool[cell] if c.entry.affair_id not in chosen and (c.entry.scanned_guess or not scanned_only)
                   and sum(p.entry.body_key == c.entry.body_key for p in picked[cell]) < cap]
             ok = [c for c in ok if types.get(c.entry.affair_type, 0) < type_cap] or ok
             if not ok:
                 return
             best = min(ok, key=lambda c: (not c.entry.lifecycle_complete, types.get(c.entry.affair_type, 0), -c.score))
             picked[cell].append(best)
+            chosen.add(best.entry.affair_id)
             types[best.entry.affair_type] = types.get(best.entry.affair_type, 0) + 1
 
     for cell in quota:  # phase 1: scanned documents, so the share of scanned PDFs does not depend on luck
@@ -321,7 +328,7 @@ def format_summary(s: dict) -> str:
              f"(seed {s.get('seed')})",
              row("level", s.get("level", {})), row("language", s.get("language", {})),
              f"  {'scanned_guess':<14}{s.get('scanned_guess', 0)}", row("affair_type", s.get("affair_type", {})),
-             f"  unmet: {len(s.get('unmet', []))}"]
+             f"  duplicates_skipped: {s.get('duplicates_skipped', 0)}", f"  unmet: {len(s.get('unmet', []))}"]
     lines += [f"    {u['level']}/{u['language']}: {u['got']}/{u['wanted']} ({u['reason']})" for u in s.get("unmet", [])]
     lines.append(f"  errors: {len(s.get('errors', []))}")
     lines += [f"    {e['body_key']}: {e['error']}" for e in s.get("errors", [])]
