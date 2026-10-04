@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "openparl-extract"
+version = "0.1.0"
+description = "Extract Swiss parliamentary affairs from PDFs into a common schema using Apertus, with provenance."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+dependencies = [
+  "httpx",
+  "pydantic>=2",
+  "rapidfuzz",
+  "pandas",
+  "typer",
+  "python-dotenv",
+  "docling",
+  "pypdf",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff", "reportlab"]
+
+[project.scripts]
+openparl-extract = "openparl_extract.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/openparl_extract"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
