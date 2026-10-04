@@ -116,7 +116,8 @@ Goal: the human reviewer never fills a JSON file. A local web page asks many SMA
 - Answers are written immediately to `data/gold/<doc>.json` (autosave) with the reviewer, timestamp, verdict and corrected value+block id; never overwrite pipeline output, keep both.
 - A "Fertig" summary shows counts of right/wrong/not-in-document and the documents still open. Evaluate (Task 8) reads only reviewed fields from the gold file.
 - Tests: question builder produces the expected question sequence for a fixture draft; answer endpoint stores a verdict and survives a restart; corrected value for a vocabulary field is rejected if not in the vocabulary; page render returns a PNG; one end-to-end test posting answers through the HTTP handler.
-- A short German reviewer guide `docs/gold_review_anleitung.md` (what a gold set is, what to click, how long it takes, examples of right/wrong).
+- A short German reviewer guide `docs/gold_review_anleitung.md` (what a gold set is, what to click, how long it takes, examples of right/wrong) and an Italian version `docs/gold_review_guida.md` (the teammate is Italian).
+- UI language: the interface and all question texts are available in German AND Italian (plus English), switchable with one click at the top, remembered per reviewer; all UI strings live in one `review/i18n.py` dict (de, it, en) so no text is hardcoded in the page. Test: every key exists in all three languages; the question builder renders every question type in all three.
 
 ### Task 11: Demo query, docs
 - Create: `evaluate/demo.py` (median days submission to executive answer for interpellations per canton, from metadata/events), `README.md`, `docs/schema_mapping.md`, `docs/technical_report.md` skeleton from the HackApertus template.
