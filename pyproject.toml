@@ -19,6 +19,8 @@ dependencies = [
   "docling",
   "pypdf",
   "truststore",
+  "pypdfium2",
+  "Pillow",
 ]
 
 [project.optional-dependencies]

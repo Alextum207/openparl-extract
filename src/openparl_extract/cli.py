@@ -198,3 +198,24 @@ def export_schema_cmd(out: Path = typer.Option(Path("schema/affair.v0.1.json"), 
 
 if __name__ == "__main__":
     app()
+
+
+@app.command()
+def review(data_dir: Path = DATA,
+           gold_dir: Optional[Path] = typer.Option(None, "--gold-dir", help="default <data-dir>/gold"),
+           port: int = typer.Option(8765, "--port"), lang: str = typer.Option("de", "--lang", help="de, it or en"),
+           open_browser: bool = typer.Option(True, "--open/--no-open", help="open the browser")):
+    """Start the local gold-review web app (127.0.0.1 only). Reviewer name and language filter are set in the page."""
+    from openparl_extract.review.app import serve
+    gold_dir = gold_dir or data_dir / "gold"
+    if not gold_dir.is_dir() or not any(gold_dir.glob("*.json")):
+        raise _fail(f"no gold files in {gold_dir}. Run `pick-corpus`, `ingest --corpus`, the pipeline (`run-all`) "
+                    "and `gold-prefill` first.")
+
+    def ready(url: str) -> None:
+        typer.echo(f"Review app: {url}  (Ctrl+C to stop)")
+        if open_browser:
+            import webbrowser
+            webbrowser.open(url + f"/?lang={lang}")
+
+    serve(data_dir, gold_dir, port, lang, on_ready=ready)
