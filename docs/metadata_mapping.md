@@ -8,8 +8,8 @@ event/role -> skipped + review flag `unmapped_event:<label>` / `unmapped_role:<l
 `GET /v1/affairs/{id}?expand=docs,events,contributors` (comma separated; `all`/`*` also documented) returns each relation as
 `{"data": [...], "meta": {...}}` (page size 100, `meta.has_more`). Persons are called **`contributors`**, not persons.
 Empty relations come back as `null`. Federal (CHE) affairs often have no `docs`; docs[].`language` was `null` in every sample,
-so the document language falls back to the first language key of `title` (de/fr/it/rm). Note: the federal title dict can
-contain several languages.
+so the document language falls back to the languages in the `title` dict. With several (federal, bilingual cantons) the flag
+`language_ambiguous:<keys>` is set and stopword detection on the parsed text decides (`language_detected:<lang>`), else the fixed order de, fr, it, rm.
 
 ## Affair fields
 `number`, `title` (dict by lang), `title_long`, `begin_date`/`end_date` (ISO datetime), `type_name` (verbatim dict, often
@@ -30,9 +30,11 @@ Fields: `type` (`person`|`group`), `fullname`, `firstname`, `lastname`, `positio
 `role_harmonized.en` seen: **Author**, Cosign, Speaker, Leading Department, Assigned Committee, Committee, Council Initial, Departement.
 "Author" is lossy: it is also used for co-signatories whose verbatim `role` is e.g. "Mitunterzeichner(in)",
 "Zweit-/Drittunterzeichner", "Cofirmatari", "Mitvorstoesser", "Miteinreichende"; first submitters read "Erstunterzeichner(in)",
-"Urheber(-in)", "Presentata", "Auteur", "Hauptvorstoesser". Rule: Author -> submitter unless the verbatim role matches the
-co-signer regex -> co_signatory. Ambiguous and treated as submitter: "Beteiligung" (rare). "Council Initial" (a chamber) and "Departement"
-(Mitbeteiligtes Departement) are not mapped.
+"Urheber(-in)", "Presentata", "Auteur", "Hauptvorstoesser". Rule: Author + verbatim role matching the co-signer regex -> co_signatory (regex also covers "Cosignataire"/"Cofirmatario",
+plain French/Italian translations of the evidenced Mitunterzeichner/Cofirmatari, not themselves seen in the data);
+Author + empty or evidenced first-submitter verbatim (Erstunterzeichn*, Urheber*, Presentata, Auteur, Hauptvorstoess*) -> submitter;
+any other verbatim role (e.g. "Beteiligung") is ambiguous: the person is kept with role `not_found` and flag `ambiguous_role:<verbatim>`.
+"Council Initial" (a chamber) and "Departement" (Mitbeteiligtes Departement) are not mapped.
 Group contributors "Leading Department" (Direktion / Federfuehrung) -> `executive_respondent`.
 
 ## events[]

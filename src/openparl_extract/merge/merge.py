@@ -8,7 +8,8 @@ import unicodedata
 from datetime import date, datetime
 from pathlib import Path
 
-from openparl_extract.merge.mapping import (AUTHOR_COSIGNER_RE, BODY_TYPE_TO_LEVEL, EVENT_TO_PROCEDURAL_STATE,
+from openparl_extract.merge.language import detect_language
+from openparl_extract.merge.mapping import (AUTHOR_COSIGNER_RE, AUTHOR_SUBMITTER_RE, BODY_TYPE_TO_LEVEL, EVENT_TO_PROCEDURAL_STATE,
                                             HARMONIZED_TYPE_TO_AFFAIR_TYPE, PERSON_ROLE_TO_ACTOR_ROLE)
 from openparl_extract.models import (Actor, ActorRole, Affair, AffairType, Language, Level, ProceduralEvent,
                                      ProceduralState, Provenance, Reference, Source, Value)
@@ -64,7 +65,22 @@ def _primary(manifest: dict) -> dict:
     return next((d for d in manifest.get("docs", []) if d.get("doc_id") == manifest.get("primary_doc_id")), {})
 
 
-def _source(a: dict, manifest: dict, parsed: ParsedDoc | None, body: dict | None) -> Source:
+def _language(a: dict, manifest: dict, parsed: ParsedDoc | None, flags: list[str]) -> str | None:
+    lang = (_primary(manifest).get("language") or "").lower()
+    if lang in Language._value2member_map_:
+        return lang
+    cands = [k for k in (a.get("title") or {}) if k in Language._value2member_map_]
+    if len(cands) <= 1:
+        return cands[0] if cands else None
+    flags.append("language_ambiguous:" + ",".join(cands))
+    detected = detect_language(" ".join(b.text for b in parsed.blocks), cands) if parsed else None
+    if detected:
+        flags.append(f"language_detected:{detected}")
+        return detected
+    return next(k for k in LANG_ORDER if k in cands)  # fixed preference, never dict order
+
+
+def _source(a: dict, manifest: dict, parsed: ParsedDoc | None, body: dict | None, flags: list[str]) -> Source:
     key, body = a.get("body_key"), body or {}
     btype = body.get("type")
     if btype == "country" and body.get("country_key", key) != "CHE":
@@ -73,9 +89,7 @@ def _source(a: dict, manifest: dict, parsed: ParsedDoc | None, body: dict | None
     if level is None:
         raise ValueError(f"cannot determine level for body {key!r} (type {btype!r}); pass the /v1/bodies entry")
     primary = _primary(manifest)
-    lang = (primary.get("language") or "").lower()
-    if lang not in Language._value2member_map_:
-        lang = next((k for k in (a.get("title") or {}) if k in Language._value2member_map_), None)
+    lang = _language(a, manifest, parsed, flags)
     if lang is None:
         raise ValueError("cannot determine document language")
     return Source(openparldata_id=str(a["id"]), parliament=pick(body.get("name"), lang) or key, level=level,
@@ -92,6 +106,11 @@ def _actors(a: dict, lang: str, flags: list[str]) -> list[Actor]:
         if role is ActorRole.submitter and AUTHOR_COSIGNER_RE.search(verbatim):
             role = ActorRole.co_signatory
         name = c.get("fullname")
+        if harmonized == "Author" and role is ActorRole.submitter and verbatim and not AUTHOR_SUBMITTER_RE.search(verbatim):
+            flags.append(f"ambiguous_role:{verbatim}")  # keep the person, do not guess the role
+            if name:
+                out.append(Actor(name=_meta(name), role=Value(status="not_found")))
+            continue
         if role is None or not name:
             flags.append(f"unmapped_role:{harmonized or verbatim or 'none'}")
             continue
@@ -132,8 +151,11 @@ def merge_affair(affair_json: dict, manifest: dict, parsed: ParsedDoc | None, se
                  verified: VerifiedParts | None, body: dict | None = None, disagreement_log: Path | None = None,
                  extra_flags: list[str] | None = None) -> Affair:
     a = affair_json
-    source = _source(a, manifest, parsed, body)
-    lang, own = source.language.value, []
+    own: list[str] = []
+    source = _source(a, manifest, parsed, body, own)
+    lang = source.language.value
+    own += [f"relation_truncated:{r}" for r in ("docs", "events", "contributors")
+            if ((a.get(r) or {}).get("meta") or {}).get("has_more")]
     type_label = pick(a.get("type_name"), lang) or pick(a.get("type_harmonized"), lang)
     affair = Affair(
         source=source,
@@ -148,7 +170,7 @@ def merge_affair(affair_json: dict, manifest: dict, parsed: ParsedDoc | None, se
     else:
         for f in ("affair_text", "justification", "executive_reasoning", "questions", "answers", "decision"):
             setattr(affair, f, getattr(verified, f))
-        own += _cross_check(affair, verified, a, disagreement_log)
+        own += _cross_check(affair, verified, a, disagreement_log, own)
     hist = affair.procedural_history
     decided = _first(hist, ProceduralState.decided, last=True) or (
         verified.decision.date.value if verified and verified.decision else None)
@@ -159,7 +181,7 @@ def merge_affair(affair_json: dict, manifest: dict, parsed: ParsedDoc | None, se
     return affair
 
 
-def _cross_check(affair: Affair, verified: VerifiedParts, a: dict, log: Path | None) -> list[str]:
+def _cross_check(affair: Affair, verified: VerifiedParts, a: dict, log: Path | None, own: list[str]) -> list[str]:
     """Metadata vs extraction. Returns flags; appends one JSON line per disagreement to `log`."""
     hist, flags, rows = affair.procedural_history, [], []
     dec = verified.decision
@@ -167,11 +189,13 @@ def _cross_check(affair: Affair, verified: VerifiedParts, a: dict, log: Path | N
     if dec and dec.date.value and meta_dec and dec.date.value != meta_dec:
         block = dec.date.provenance[0].block_id if dec.date.provenance else None
         rows.append(("decision.date", meta_dec.isoformat(), dec.date.value.isoformat(), block))
-    if hist:  # answer presence: only comparable when the metadata carries events at all
-        meta_ans = _first(hist, ProceduralState.answered) is not None
-        ext_ans = any(x.text.value for x in verified.answers)
-        if meta_ans != ext_ans:
-            rows.append(("answered", meta_ans, ext_ans, None))
+    meta_ans = _first(hist, ProceduralState.answered) is not None
+    ext_ans = any(x.text.value for x in verified.answers)
+    real = [e for e in hist if e.event.value != "begin_date"]  # drop the synthesized submitted event
+    unmapped = any(f.startswith("unmapped_event:") for f in own)
+    # missing metadata is not a claim of "not answered": only compare when it can speak for itself
+    if (meta_ans and not ext_ans) or (not meta_ans and ext_ans and real and not unmapped):
+        rows.append(("answered", meta_ans, ext_ans, None))
     for field, meta, ext, block in rows:
         flags.append(f"disagreement:{field}")
         if log:

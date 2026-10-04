@@ -224,3 +224,119 @@ def test_result_roundtrips_schema(name, tmp_path):
     assert Affair.model_validate_json(af.model_dump_json()) == af
     for v in [af.addressed_body, af.title]:  # extracted values always carry provenance
         assert v.status != "extracted" or v.provenance
+
+
+# ---- fix round 1 ----
+from openparl_extract.merge.language import detect_language  # noqa: E402
+from openparl_extract.models import Answer  # noqa: E402
+
+DE = "Der Regierungsrat ist der Ansicht, dass die Frage nicht mit dem Gesetz und der Verordnung vereinbar ist. " * 3
+FR = "Le Conseil d'Etat est d'avis que la question n'est pas dans le cadre de la loi et que les droits sont une chose. " * 3
+IT = "Il Consiglio di Stato e del parere che la domanda non sia nel quadro della legge e che i diritti sono una cosa. " * 3
+
+
+def answer_verified():
+    prov = [Provenance(page=2, block_id="p2_b1", quote="Antwort")]
+    return empty_verified(answers=[Answer(text=Value(value="Antwort", status="extracted", provenance=prov))])
+
+
+def test_detect_language():
+    assert detect_language(DE, ["de", "fr", "it"]) == "de"
+    assert detect_language(FR, ["de", "fr", "it"]) == "fr"
+    assert detect_language(IT, ["de", "fr", "it"]) == "it"
+    assert detect_language(DE + FR, ["de", "fr"]) is None  # tie: no clear winner
+    assert detect_language("", ["de", "fr"]) is None
+    assert detect_language(FR, ["de"]) is None  # needs >= 10 hits and 1.5x runner-up among candidates only
+
+
+def bilingual(tmp_path, parsed=None):
+    a = load("che_interpellation_340788")
+    a["title"] = {"it": "Titolo", "fr": a["title"]["fr"], "de": "Titel"}
+    return merge_affair(a, manifest_of(a, tmp_path), parsed, None, None, body=BODIES["CHE"])
+
+
+def test_language_ambiguous_prefers_fixed_order_not_dict_order(tmp_path):
+    af = bilingual(tmp_path)
+    assert af.source.language == "de" and af.title.value == "Titel"
+    assert "language_ambiguous:it,fr,de" in af.review_flags
+    assert not any(f.startswith("language_detected") for f in af.review_flags)
+
+
+def test_language_ambiguous_detected_from_parsed_text(tmp_path):
+    p = ParsedDoc(source_file="x", page_count=1, is_scanned=False, blocks=[Block(id="p1_b0", page=1, text=FR)])
+    af = bilingual(tmp_path, p)
+    assert af.source.language == "fr"
+    assert "language_ambiguous:it,fr,de" in af.review_flags and "language_detected:fr" in af.review_flags
+
+
+def test_single_language_no_flag(tmp_path):
+    af = merge("che_interpellation_340788", tmp_path)
+    assert not any(f.startswith("language_") for f in af.review_flags)
+
+
+def test_answered_not_logged_when_metadata_has_no_mapped_events(tmp_path):
+    log = tmp_path / "d.jsonl"
+    af = merge("che_interpellation_340788", tmp_path, verified=answer_verified(), disagreement_log=log)
+    assert not log.exists() and "disagreement:answered" not in af.review_flags
+
+
+def test_answered_not_logged_when_unmapped_events_exist(tmp_path):
+    log = tmp_path / "d.jsonl"  # ZH motion: mapped events, none answered, but unmapped_event flags were raised
+    af = merge("zh_motion_219288", tmp_path, verified=answer_verified(), disagreement_log=log)
+    assert any(f.startswith("unmapped_event") for f in af.review_flags)
+    assert not log.exists()
+
+
+def test_answered_logged_case_b_no_unmapped_events(tmp_path):
+    a = load("zurich_city_interpellation_14228")
+    a["events"]["data"] = [e for e in a["events"]["data"] if e["title_harmonized_id"] != 6]
+    log = tmp_path / "d.jsonl"
+    af = merge_affair(a, manifest_of(a, tmp_path), None, None, answer_verified(), body=BODIES["261"],
+                      disagreement_log=log)
+    row = json.loads(log.read_text(encoding="utf-8"))
+    assert row["field"] == "answered" and row["metadata_value"] is False and row["extracted_value"] is True
+    assert "disagreement:answered" in af.review_flags
+
+
+def test_answered_logged_case_a_event_but_no_extracted_answer(tmp_path):
+    log = tmp_path / "d.jsonl"
+    merge("zurich_city_interpellation_14228", tmp_path, verified=empty_verified(), disagreement_log=log)
+    assert json.loads(log.read_text(encoding="utf-8"))["metadata_value"] is True
+
+
+def test_answered_agree_not_logged(tmp_path):
+    log = tmp_path / "d.jsonl"
+    merge("zurich_city_interpellation_14228", tmp_path, verified=answer_verified(), disagreement_log=log)
+    assert not log.exists()
+
+
+def with_role(tmp_path, harmonized, verbatim):
+    a = load("che_interpellation_340788")
+    c = a["contributors"]["data"][1]
+    c["role_harmonized"], c["role"] = {"en": harmonized}, ({"de": verbatim} if verbatim else {})
+    return merge_affair(a, manifest_of(a, tmp_path), None, None, None, body=BODIES["CHE"])
+
+
+@pytest.mark.parametrize("verbatim,role", [("Urheber(-in)", "submitter"), ("Erstunterzeichnender", "submitter"),
+                                           ("Presentata", "submitter"), ("Auteur", "submitter"),
+                                           ("Hauptvorstösserin/Hauptvorstösser", "submitter"), (None, "submitter"),
+                                           ("Mitunterzeichner", "co_signatory"), ("Cosignataire", "co_signatory"),
+                                           ("Cofirmatario", "co_signatory")])
+def test_author_role_known_forms(tmp_path, verbatim, role):
+    af = with_role(tmp_path, "Author", verbatim)
+    assert af.actors[0].role.value == role and not any(f.startswith("ambiguous_role") for f in af.review_flags)
+
+
+def test_author_role_ambiguous_keeps_person_flags(tmp_path):
+    af = with_role(tmp_path, "Author", "Beteiligung")
+    assert af.actors[0].name.value == "Sidney Kamerzin"
+    assert af.actors[0].role.status == "not_found" and af.actors[0].role.value is None
+    assert "ambiguous_role:Beteiligung" in af.review_flags
+
+
+def test_relation_truncated_flag(tmp_path):
+    a = load("zh_motion_219288")
+    a["events"]["meta"]["has_more"] = True
+    af = merge_affair(a, manifest_of(a, tmp_path), None, None, None, body=BODIES["ZH"])
+    assert "relation_truncated:events" in af.review_flags
+    assert not any(f.startswith("relation_truncated") for f in merge("zh_motion_219288", tmp_path).review_flags)

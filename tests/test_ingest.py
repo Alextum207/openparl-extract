@@ -171,3 +171,11 @@ def test_ingest_stores_events_and_contributors(tmp_path):
     d = ingest_affair(client(h), 14228, tmp_path)
     stored = json.loads((d / "affair.json").read_text(encoding="utf-8"))
     assert len(stored["events"]["data"]) == 3 and stored["contributors"]["data"][0]["fullname"]
+
+
+def test_ingest_keeps_relation_meta(tmp_path):
+    full = json.loads((Path(__file__).parent / "fixtures" / "merge" / "zh_motion_219288.json").read_text(encoding="utf-8"))
+    full["events"]["meta"]["has_more"] = True
+    full["docs"]["data"] = []
+    d = ingest_affair(client(lambda r: httpx.Response(200, json=full)), 219288, tmp_path)
+    assert json.loads((d / "affair.json").read_text(encoding="utf-8"))["events"]["meta"]["has_more"] is True
