@@ -1,5 +1,5 @@
 """Docling glue: PDF -> ParsedDoc with stable block IDs p{page}_b{index}."""
-import ssl
+import logging
 from pathlib import Path
 
 import truststore
@@ -10,6 +10,7 @@ from openparl_extract.parse.blocks import Block, ParsedDoc, strip_running_header
 SCANNED_CHARS_PER_PAGE = 50  # avg extractable chars/page below this => treated as scanned
 _TYPES = {"section_header": "heading", "title": "heading", "text": "paragraph", "paragraph": "paragraph",
           "list_item": "paragraph", "table": "table", "picture": "image", "handwritten_text": "signature_stamp"}
+log = logging.getLogger(__name__)
 _HF = {"page_header", "page_footer"}  # Docling-detected running header/footer: always removed
 
 
@@ -36,10 +37,12 @@ def parse_pdf(path: Path, ocr: bool | None = None) -> ParsedDoc:
     base = dict(source_file=path.name, page_count=n_pages, is_scanned=scanned)
     try:
         doc = _convert(path, scanned if ocr is None else ocr)
-    except Exception:  # ponytail: swallow only for text-less PDFs; real failures on text PDFs must surface
-        if scanned:
-            return ParsedDoc(**base, blocks=[])
-        raise
+    except Exception as e:
+        if not scanned:
+            raise  # text PDF: a conversion failure is real, never swallow
+        err = f"{type(e).__name__}: {e}"
+        log.warning("Docling conversion failed for scanned/no-text PDF %s: %s", path.name, err)
+        return ParsedDoc(**base, blocks=[], parse_error=err, review_flags=["parse_failed"])
     counters: dict[int, int] = {}
     blocks: list[Block] = []
     hf: list[Block] = []
@@ -66,4 +69,5 @@ def parse_pdf(path: Path, ocr: bool | None = None) -> ParsedDoc:
         blk = Block(id=f"p{page}_b{idx}", page=page, bbox=bbox, text=text, type=_TYPES.get(label, "other"))
         (hf if label in _HF else blocks).append(blk)
     kept, removed = strip_running_headers_footers(blocks, n_pages, heights)
-    return ParsedDoc(**base, blocks=kept, removed=hf + removed)
+    flags = [] if any(b.text.strip() for b in kept) else ["no_text_found"]
+    return ParsedDoc(**base, blocks=kept, removed=hf + removed, review_flags=flags)

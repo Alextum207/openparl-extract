@@ -28,6 +28,8 @@ class ParsedDoc(BaseModel):
     is_scanned: bool
     blocks: list[Block]
     removed: list[Block] = []
+    parse_error: str | None = None
+    review_flags: list[str] = []
 
 
 def _norm(t: str) -> str:

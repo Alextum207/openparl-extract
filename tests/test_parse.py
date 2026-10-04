@@ -91,4 +91,32 @@ def test_parse_pdf_no_text_layer(tmp_path):
     c.rect(100, 100, 200, 200, fill=1)
     c.save()
     d = parse_pdf(pdf)
-    assert d.is_scanned is True and isinstance(d.blocks, list)
+    assert d.is_scanned is True and not any(b.text.strip() for b in d.blocks)
+    # observed: Docling succeeds and yields only an empty image block, so no_text_found (not parse_failed)
+    assert d.review_flags == ['no_text_found'] and d.parse_error is None
+
+
+def _boom(*a, **k):
+    raise RuntimeError("model download failed")
+
+
+def test_scanned_conversion_failure_flagged(tmp_path, monkeypatch):
+    from reportlab.pdfgen import canvas
+    from openparl_extract.parse import docling_parse
+    pdf = tmp_path / "s.pdf"
+    c = canvas.Canvas(str(pdf)); c.rect(10, 10, 50, 50); c.save()
+    monkeypatch.setattr(docling_parse, "_convert", _boom)
+    d = docling_parse.parse_pdf(pdf)
+    assert d.blocks == [] and d.is_scanned and d.review_flags == ["parse_failed"]
+    assert "RuntimeError" in d.parse_error and "model download failed" in d.parse_error
+    save_parsed(d, tmp_path / "o.json")
+    assert load_parsed(tmp_path / "o.json") == d
+
+
+def test_text_pdf_conversion_failure_raises(tmp_path, monkeypatch):
+    from openparl_extract.parse import docling_parse
+    pdf = tmp_path / "t.pdf"
+    _pdf(pdf)
+    monkeypatch.setattr(docling_parse, "_convert", _boom)
+    with pytest.raises(RuntimeError):
+        docling_parse.parse_pdf(pdf)
