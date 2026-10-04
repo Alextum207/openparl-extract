@@ -118,7 +118,7 @@ def test_question_answer_collapse_to_families():
     a = mk("a", questions=[Question(id="q1", text=ext("Q?"))], answers=[Answer(text=ext("A."))])
     g = gd("a", [ge("question:q1", "Q?", "correct"), ge("answer:0", "A.", "wrong")])
     m = field_metrics([a], [g])
-    assert set(m) == {"questions", "answers"}
+    assert set(m) == {"questions", "answers", "_all"}
     assert m["questions"].tp == 1 and m["answers"].fp == 1
 
 
@@ -245,3 +245,54 @@ def test_write_matrix_and_report(tmp_path):
         assert (out / f).exists()
     assert json.loads((out / "metrics.json").read_text())["affair_text"]["tp"] == 2
     assert "precision" in pd.read_csv(out / "metrics_by_field.csv").columns
+
+
+# ---------- body_key grouping (fix round 1) ----------
+def mk_bk(aid, parl, bk, text="T", level="federal", lang="de", flags=()):
+    a = mk(aid, text, level=level, lang=lang, parl=parl, review_flags=list(flags))
+    a.source.body_key = bk
+    return a
+
+
+def multiling():
+    return [mk_bk("1", "Bundesversammlung", "CHE", lang="de", flags=["segmentation_failed"]),
+            mk_bk("2", "Assemblée fédérale", "CHE", lang="fr"),
+            mk_bk("3", "Assemblea federale", "CHE", lang="it")]
+
+
+def test_matrix_one_column_per_body_key():
+    df = build_matrix(multiling(), [])
+    p = df[df.group_type == "parliament"]
+    assert set(p.group) == {"CHE"} and set(p.n_affairs) == {3}
+
+
+def test_flag_rates_and_group_metrics_share_parliament_keys():
+    affairs = multiling()
+    gold = [gd(a.source.openparldata_id, [ge("affair_text", "T", "correct")], level="federal", parl="CHE")
+            for a in affairs]
+    fr = flag_rates(affairs)
+    assert set(fr[fr.group_type == "parliament"].group) == {"CHE"}
+    gm = group_metrics(affairs, gold, "parliament")
+    assert set(gm.group) == {"CHE"}
+
+
+def test_group_metrics_prefers_affair_attributes():
+    a = mk_bk("1", "Bundesversammlung", "CHE")
+    g = gd("1", [ge("affair_text", "T", "correct")], level="municipal", parl="STALE")  # wrong copies on the doc
+    assert set(group_metrics([a], [g], "parliament").group) == {"CHE"}
+    assert set(group_metrics([a], [g], "level").group) == {"federal"}
+
+
+def test_fallback_to_parliament_name_when_no_body_key():
+    a = mk("1", "T", parl="Zürich")
+    assert set(flag_rates([a]).query("group_type == 'parliament'").group) == {"Zürich"}
+    assert set(build_matrix([a], []).query("group_type == 'parliament'").group) == {"Zürich"}
+
+
+def test_all_headline_numbers():
+    affairs, gold = text_fixture()
+    m = field_metrics(affairs, gold)["_all"]
+    # same fixture as the affair_text test: TP=2 FP=2 FN=1 TN=2
+    assert (m.tp, m.fp, m.fn, m.tn) == (2, 2, 1, 2)
+    assert m.f1 == pytest.approx(4 / 7) and m.hallucination_rate == pytest.approx(0.25)
+    assert m.not_found_correctness == pytest.approx(2 / 3)

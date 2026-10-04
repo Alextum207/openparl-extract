@@ -92,7 +92,7 @@ def _source(a: dict, manifest: dict, parsed: ParsedDoc | None, body: dict | None
     lang = _language(a, manifest, parsed, flags)
     if lang is None:
         raise ValueError("cannot determine document language")
-    return Source(openparldata_id=str(a["id"]), parliament=pick(body.get("name"), lang) or key, level=level,
+    return Source(openparldata_id=str(a["id"]), parliament=pick(body.get("name"), lang) or key, body_key=key, level=level,
                   language=lang, document_url=primary.get("url_oparl"), pdf_sha256=primary.get("pdf_sha256"),
                   is_scanned=parsed.is_scanned if parsed else None)
 

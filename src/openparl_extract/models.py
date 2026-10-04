@@ -92,7 +92,8 @@ class Value(BaseModel, Generic[T]):
 
 class Source(BaseModel):
     openparldata_id: str
-    parliament: str
+    parliament: str  # localized body name (display only)
+    body_key: str | None = None  # stable body identifier; use this for grouping
     level: Level
     language: Language
     document_url: str | None = None

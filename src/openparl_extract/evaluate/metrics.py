@@ -77,6 +77,14 @@ def _collect(affairs: list[Affair], gold: list[GoldDoc]) -> list[tuple[GoldDoc, 
     return out
 
 
+def _finish(m: FieldMetrics) -> None:
+    m.precision, m.recall = _ratio(m.tp, m.tp + m.fp), _ratio(m.tp, m.tp + m.fn)
+    if m.precision is not None and m.recall is not None:
+        m.f1 = 2 * m.precision * m.recall / (m.precision + m.recall) if m.precision + m.recall > 0 else 0.0
+    m.not_found_correctness = _ratio(m.tn, m.tn + m.fn)
+    m.hallucination_rate = _ratio(m.n_hallucinated, m.n_nonnull_reviewed)
+
+
 def _compute(rows, threshold: int) -> dict[str, FieldMetrics]:
     ms: dict[str, FieldMetrics] = {}
     for d, e, stale in rows:
@@ -101,27 +109,50 @@ def _compute(rows, threshold: int) -> dict[str, FieldMetrics]:
             else:
                 m.tn += 1
     for m in ms.values():
-        m.precision, m.recall = _ratio(m.tp, m.tp + m.fp), _ratio(m.tp, m.tp + m.fn)
-        if m.precision is not None and m.recall is not None and m.precision + m.recall > 0:
-            m.f1 = 2 * m.precision * m.recall / (m.precision + m.recall)
-        elif m.precision is not None and m.recall is not None:
-            m.f1 = 0.0
-        m.not_found_correctness = _ratio(m.tn, m.tn + m.fn)
-        m.hallucination_rate = _ratio(m.n_hallucinated, m.n_nonnull_reviewed)
+        _finish(m)
+    ms["_all"] = _sum(list(ms.values()))
     return ms
+
+
+def _sum(parts: list[FieldMetrics]) -> FieldMetrics:
+    t = FieldMetrics(stale=[])
+    for p in parts:
+        for k in ("tp", "fp", "fn", "tn", "near_miss", "n_reviewed", "n_unsure_or_unreviewed",
+                  "n_nonnull_reviewed", "n_hallucinated"):
+            setattr(t, k, getattr(t, k) + getattr(p, k))
+        t.stale += p.stale
+    _finish(t)
+    return t
 
 
 def field_metrics(affairs: list[Affair], gold: list[GoldDoc], match_threshold: int = 90) -> dict[str, FieldMetrics]:
     return _compute(_collect(affairs, gold), match_threshold)
 
 
+def body_id(a: Affair) -> str:
+    """Stable parliament id: Source.body_key, falling back to the localized name for old outputs."""
+    return a.source.body_key or a.source.parliament
+
+
+def _group_of(doc: GoldDoc, a: Affair | None, by: str):
+    if a is None:  # affair missing: fall back to the GoldDoc copy
+        return doc.body_key if by == "parliament" else getattr(doc, by)
+    if by == "parliament":
+        return body_id(a)
+    if by == "is_scanned":
+        return a.source.is_scanned
+    if by == "affair_type":
+        return a.affair_type.value
+    return getattr(a.source, by)
+
+
 def group_metrics(affairs: list[Affair], gold: list[GoldDoc],
                   by: Literal["level", "language", "parliament", "is_scanned", "affair_type"],
                   match_threshold: int = 90) -> pd.DataFrame:
-    attr = "body_key" if by == "parliament" else by
+    by_id = {a.source.openparldata_id: a for a in affairs}
     groups: dict = {}
     for r in _collect(affairs, gold):
-        v = getattr(r[0], attr)
+        v = _group_of(r[0], by_id.get(r[0].affair_id), by)
         groups.setdefault(str(getattr(v, "value", v)), []).append(r)
     recs = [{"field": f, "group_type": by, "group": g, **m.model_dump(exclude={"stale"})}
             for g, rows in sorted(groups.items()) for f, m in _compute(rows, match_threshold).items()]
@@ -181,7 +212,7 @@ def flag_rates(affairs: list[Affair]) -> pd.DataFrame:
     for a in affairs:
         flags = {f.split(":")[0] for f in a.review_flags}
         s = a.source
-        for gt, g in (("parliament", s.parliament), ("level", s.level.value), ("language", s.language.value)):
+        for gt, g in (("parliament", body_id(a)), ("level", s.level.value), ("language", s.language.value)):
             groups.setdefault((gt, g), []).append(flags)
     recs = [{"group_type": gt, "group": g, "n_affairs": len(fl),
              **{f: sum(f in x for x in fl) / len(fl) for f in fams}} for (gt, g), fl in sorted(groups.items())]

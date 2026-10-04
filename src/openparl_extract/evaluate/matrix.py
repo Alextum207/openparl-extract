@@ -14,7 +14,7 @@ from typing import Callable, Literal
 import pandas as pd
 
 from openparl_extract.evaluate.gold import GoldDoc
-from openparl_extract.evaluate.metrics import FLAG_FAMILIES, _collect, _compute, flag_rates
+from openparl_extract.evaluate.metrics import FLAG_FAMILIES, body_id, _collect, _compute, flag_rates
 from openparl_extract.models import Affair
 
 Classification = Literal["consistent", "partial", "not_representable", "insufficient_data"]
@@ -73,8 +73,8 @@ def classify(availability: float, f1: float | None, n_affairs: int, th: Threshol
 def _columns(affairs: list[Affair]) -> list[tuple[str, str, list[Affair]]]:
     cols = [("level", lv, [a for a in affairs if a.source.level.value == lv]) for lv in LEVELS]
     cols += [("language", lg, [a for a in affairs if a.source.language.value == lg]) for lg in LANGS]
-    cols += [("parliament", p, [a for a in affairs if a.source.parliament == p])
-             for p in sorted({a.source.parliament for a in affairs})]
+    cols += [("parliament", p, [a for a in affairs if body_id(a) == p])
+             for p in sorted({body_id(a) for a in affairs})]
     return cols
 
 

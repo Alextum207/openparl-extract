@@ -41,7 +41,7 @@ def empty_verified(**kw):
 
 def test_zh_motion_metadata_mapped(tmp_path):
     af = merge("zh_motion_219288", tmp_path)
-    assert af.source.level == "cantonal" and af.source.language == "de" and af.source.parliament == "Zürich"
+    assert af.source.level == "cantonal" and af.source.language == "de" and af.source.parliament == "Zürich" and af.source.body_key == "ZH"
     assert af.source.pdf_sha256 and af.source.document_url.startswith("https://files.openparldata.ch/")
     assert (af.title.value.startswith("Ein eigener Hochschulrat"), af.title.status) == (True, "from_metadata")
     assert af.affair_type.value == "motion" and af.affair_type.status == "from_metadata"
