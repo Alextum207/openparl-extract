@@ -233,3 +233,34 @@ def test_too_soon_in_node():
              "a.strictEqual(L.tooSoon(0, 5), false);"
     r = subprocess.run(["node", "-e", script], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+# ---------- fix round 2 ----------
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
+def test_block_repeat_in_node():
+    script = f"""const L = require({json.dumps(str(LOGIC))}); const a = require('assert');
+const b = (key, typing, correctionOpen, repeat = true) => L.blockRepeat({{key, typing, repeat, correctionOpen}});
+a.strictEqual(b('Backspace', true, true), false);
+a.strictEqual(b('a', true, false), false);
+a.strictEqual(b('x', true, false), false);
+a.strictEqual(b('1', false, false), true);
+a.strictEqual(b('Enter', false, false), true);
+a.strictEqual(b('z', false, false), true);
+a.strictEqual(b('Z', false, false), true);
+a.strictEqual(b('Enter', true, true), true);
+a.strictEqual(b('Enter', true, false), false);
+a.strictEqual(b('q', false, false), false);
+a.strictEqual(b('1', false, false, false), false);
+"""
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+
+
+def test_keydown_uses_block_repeat_after_typing_is_computed():
+    h = _keydown()
+    assert "Logic.blockRepeat" in h and "e.repeat) {" not in h
+    assert h.index("typing =") < h.index("Logic.blockRepeat")
+
+
+def test_busy_is_counted_across_overlapping_requests():
+    assert "S.inflight" in HTML and "setBusy(false)" not in _func("submit") and "setBusy(false)" not in _func("undo")

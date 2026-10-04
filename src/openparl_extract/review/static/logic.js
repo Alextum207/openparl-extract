@@ -46,6 +46,13 @@
   /** True when less than 400 ms passed since a question appeared (guards against key-repeat answers). */
   function tooSoon(shownAt, now) { return shownAt > 0 && now - shownAt < 400; }
 
-  return { tooSoon: tooSoon, fill: fill, scaleBox: scaleBox, pickLang: pickLang, optionClass: optionClass,
+  /** Should this (repeated) keydown be swallowed? Typing keeps native repeat, except a held Enter that confirms the correction. */
+  function blockRepeat(k) {
+    if (!k.repeat) return false;
+    if (k.typing) return k.key === "Enter" && !!k.correctionOpen;
+    return /^[1-9]$/.test(k.key) || k.key === "Enter" || k.key.toLowerCase() === "z";
+  }
+
+  return { blockRepeat: blockRepeat, tooSoon: tooSoon, fill: fill, scaleBox: scaleBox, pickLang: pickLang, optionClass: optionClass,
            buttonLabel: buttonLabel, progressNumbers: progressNumbers };
 });

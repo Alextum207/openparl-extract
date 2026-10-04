@@ -217,7 +217,7 @@ td.n, th.n { text-align: right; }
 /* All visible text comes from GET /api/i18n; the page only holds layout. DOM text is always set via textContent. */
 var $ = function (id) { return document.getElementById(id); };
 var S = { lang: "en", i18n: {}, reviewer: "", langs: ["de", "fr", "it"], q: null, page: 1, picking: false, sel: null,
-          busy: false, include: false, token: 0, blocks: {}, screen: "start", toastTimer: null, vocabPick: null, optional: false, shownAt: 0, qtoken: 0 };
+          busy: false, include: false, token: 0, blocks: {}, screen: "start", toastTimer: null, vocabPick: null, optional: false, shownAt: 0, qtoken: 0, inflight: 0 };
 
 function t(key) { return Object.prototype.hasOwnProperty.call(S.i18n, key) ? S.i18n[key] : key; }
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } return null; }
@@ -266,6 +266,9 @@ function toast(msg) {
   var el = $("toast"); el.textContent = msg; el.classList.add("show");
   clearTimeout(S.toastTimer); S.toastTimer = setTimeout(function () { el.classList.remove("show"); }, 1800);
 }
+/* in-flight counter: busy ends only when the last overlapping request finishes */
+function lock() { S.inflight++; setBusy(true); }
+function unlock() { S.inflight = Math.max(0, S.inflight - 1); if (!S.inflight) setBusy(false); }
 function setBusy(b) {
   S.busy = b;
   document.querySelectorAll("#answers button, #correction button, #undo-btn, #page-prev, #page-next").forEach(function (el) { el.disabled = b || el.dataset.off === "1"; });
@@ -287,7 +290,7 @@ function updateProgressText() {
 /* ---------- queue ---------- */
 async function loadQuestion(ref) {
   var tok = ++S.qtoken;
-  setBusy(true);
+  lock();
   try {
     var q = await api("/api/question?" + qs(ref ? { doc: ref.doc, field: ref.field, lang: S.lang } :
       { reviewer: S.reviewer, lang: S.lang, languages: langsParam(), include_unsure: S.include ? "1" : "0" }));
@@ -295,7 +298,7 @@ async function loadQuestion(ref) {
     if (q.done) showDone(q); else showQuestion(q);
     refreshProgress();
   } catch (e) { if (tok === S.qtoken) showBanner(e.message); }
-  finally { if (tok === S.qtoken) setBusy(false); }
+  finally { unlock(); }
 }
 
 function showQuestion(q) {
@@ -395,24 +398,24 @@ function confirmCorrection() {
 /* ---------- submit / undo ---------- */
 async function submit(verdict, extra) {
   if (S.busy) return;
-  setBusy(true);
+  lock();
   try {
     var body = Object.assign({ doc: S.q.doc_key, field: S.q.field, verdict: verdict, reviewer: S.reviewer, lang: S.lang }, extra);
     await api("/api/answer", body);
     $("banner").hidden = true; toast(t("toast.saved"));
     await loadQuestion();
   } catch (e) { showBanner(e.message); }
-  finally { setBusy(false); }
+  finally { unlock(); }
 }
 async function undo() {
   if (S.busy || S.screen === "start") return;
-  setBusy(true);
+  lock();
   try {
     await api("/api/undo", { reviewer: S.reviewer, lang: S.lang });
     $("banner").hidden = true; toast(t("toast.undone"));
     await loadQuestion();
   } catch (e) { showBanner(e.message); }  /* keep the current question; the UI is never blocked */
-  finally { setBusy(false); }
+  finally { unlock(); }
 }
 
 /* ---------- PDF page + overlay ---------- */
@@ -510,8 +513,9 @@ $("btn-start-over").addEventListener("click", function () { S.include = false; S
 window.addEventListener("resize", drawOverlay);
 document.addEventListener("keydown", function (e) {
   if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
-  if (e.repeat) { e.preventDefault(); return; }  /* a held key must never answer the next question */
-  var tag = (e.target.tagName || "").toLowerCase(), typing = tag === "input" || tag === "textarea";
+  var tag = (e.target.tagName || "").toLowerCase(), typing = tag === "input" || tag === "textarea" || !!e.target.isContentEditable;
+  /* a held key must never answer the next question, but typing keeps its native key repeat */
+  if (Logic.blockRepeat({ key: e.key, typing: typing, repeat: e.repeat, correctionOpen: S.screen === "question" && !$("correction").hidden })) { e.preventDefault(); return; }
   if (S.screen === "question" && !$("correction").hidden) {
     if (e.key === "Enter" && !(tag === "button" || e.target.getAttribute("role") === "button") && !(tag === "textarea" && e.shiftKey)) { e.preventDefault(); confirmCorrection(); }
     else if (e.key === "Escape") leaveCorrection();
