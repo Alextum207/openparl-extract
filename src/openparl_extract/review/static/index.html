@@ -102,6 +102,13 @@ table { border-collapse: collapse; width: 100%; font-size: .95rem; }
 th, td { border-bottom: 1px solid var(--line); padding: .4rem .5rem; text-align: left; }
 td.n, th.n { text-align: right; }
 .wrapx { overflow-x: auto; }
+@media (max-width: 900px) {
+  header { position: static; padding: .4rem .6rem; gap: .3rem .6rem; }
+  header h1 { font-size: 1rem; flex: 1 1 auto; }
+  #hdr-progress { flex: 1 1 100%; order: 5; min-width: 0; }
+  #q-prompt { font-size: 1.3rem; margin-bottom: .6rem; }
+  .btn { min-height: 48px; padding: .3rem .6rem; }
+}
 @media (max-width: 480px) { html { font-size: 17px; } main { padding: .6rem; } .panel { padding: .9rem; } }
 </style>
 </head>
@@ -151,7 +158,7 @@ td.n, th.n { text-align: right; }
       </div>
       <div id="answers" data-testid="answers"></div>
       <section id="correction" data-testid="correction" hidden aria-labelledby="corr-title">
-        <h3 id="corr-title" data-i18n="correction.title"></h3>
+        <h3 id="corr-title"></h3>
         <p class="hint" id="corr-hint"></p>
         <div id="corr-text" hidden>
           <div id="sel-box" data-testid="sel-box" aria-live="polite"></div>
@@ -164,6 +171,7 @@ td.n, th.n { text-align: right; }
           <input type="date" id="gold-date" data-testid="gold-date">
         </div>
         <div class="row">
+          <button type="button" class="btn btn-primary" id="btn-skip" data-testid="btn-skip" hidden><span data-i18n="btn.skip"></span></button>
           <button type="button" class="btn btn-primary" id="btn-confirm" data-testid="btn-confirm"><kbd>Enter</kbd><span data-i18n="btn.confirm"></span></button>
           <button type="button" class="btn" id="btn-cancel" data-testid="btn-cancel" data-i18n="btn.cancel"></button>
         </div>
@@ -209,7 +217,7 @@ td.n, th.n { text-align: right; }
 /* All visible text comes from GET /api/i18n; the page only holds layout. DOM text is always set via textContent. */
 var $ = function (id) { return document.getElementById(id); };
 var S = { lang: "en", i18n: {}, reviewer: "", langs: ["de", "fr", "it"], q: null, page: 1, picking: false, sel: null,
-          busy: false, include: false, token: 0, blocks: {}, screen: "start", toastTimer: null, vocabPick: null };
+          busy: false, include: false, token: 0, blocks: {}, screen: "start", toastTimer: null, vocabPick: null, optional: false, shownAt: 0, qtoken: 0 };
 
 function t(key) { return Object.prototype.hasOwnProperty.call(S.i18n, key) ? S.i18n[key] : key; }
 function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } return null; }
@@ -240,6 +248,7 @@ async function loadI18n(lang) {
   S.lang = lang; store("oc_lang", lang); applyI18n();
 }
 async function setLang(lang) {
+  if (S.busy) return;  /* never switch while a save or load is in flight */
   try { await loadI18n(lang); } catch (e) { return showBanner(e.message); }
   if (S.screen === "question" && S.q) loadQuestion({ doc: S.q.doc_key, field: S.q.field });
   else if (S.screen === "done") loadQuestion();
@@ -277,18 +286,20 @@ function updateProgressText() {
 
 /* ---------- queue ---------- */
 async function loadQuestion(ref) {
+  var tok = ++S.qtoken;
   setBusy(true);
   try {
     var q = await api("/api/question?" + qs(ref ? { doc: ref.doc, field: ref.field, lang: S.lang } :
       { reviewer: S.reviewer, lang: S.lang, languages: langsParam(), include_unsure: S.include ? "1" : "0" }));
+    if (tok !== S.qtoken) return;  /* a newer request superseded this one */
     if (q.done) showDone(q); else showQuestion(q);
     refreshProgress();
-  } catch (e) { showBanner(e.message); }
-  finally { setBusy(false); }
+  } catch (e) { if (tok === S.qtoken) showBanner(e.message); }
+  finally { if (tok === S.qtoken) setBusy(false); }
 }
 
 function showQuestion(q) {
-  S.q = q; S.picking = false; S.sel = null; S.vocabPick = null; S.page = q.page || 1;
+  S.q = q; S.shownAt = Date.now(); S.picking = false; S.sel = null; S.vocabPick = null; S.page = q.page || 1;
   showScreen("question");
   $("q-prompt").textContent = q.prompt;
   $("q-context").hidden = !q.question_text;
@@ -325,14 +336,19 @@ function renderAnswers() {
 }
 
 function choose(i) {
-  if (S.busy || !S.q || !S.q.options[i] || S.picking || !$("correction").hidden) return;
+  if (S.busy || !S.q || !S.q.options[i] || S.picking || !$("correction").hidden || Logic.tooSoon(S.shownAt, Date.now())) return;
   var o = S.q.options[i];
-  if (o.needs_gold) enterCorrection(); else submit(o.verdict, {});
+  if (o.needs_gold) enterCorrection(false);
+  else if (o.verdict === "wrong") enterCorrection(true);  /* optional step: skip = plain "wrong" */
+  else submit(o.verdict, {});
 }
 
 /* ---------- correction step ---------- */
-function enterCorrection() {
+function enterCorrection(optional) {
   var q = S.q, vk = q.value_kind;
+  S.optional = !!optional;
+  $("corr-title").textContent = t(optional ? "correction.optional_title" : "correction.title");
+  $("btn-skip").hidden = !optional;
   $("answers").hidden = true; $("correction").hidden = false;
   $("corr-hint").textContent = vk === "text" ? t(q.kind === "presence" ? "hint.presence_yes" : "hint.wrong_text") : vk === "vocab" ? t("hint.pick_vocab") : t("hint.date");
   $("corr-text").hidden = vk !== "text"; $("vocab-grid").hidden = vk !== "vocab"; $("corr-date").hidden = vk !== "date";
@@ -362,17 +378,17 @@ function buildVocab() {
 function updateSelBox() {
   $("sel-box").textContent = S.sel ? t("correction.selected") + ": " + S.sel.text : t("correction.none");
 }
-function selectBlock(b, page) { S.sel = { id: b.id, page: page, text: b.text }; updateSelBox(); drawOverlay(); }
+function selectBlock(b, page) { S.sel = { id: b.id, page: page, text: b.text }; $("gold-text").value = ""; updateSelBox(); drawOverlay(); }
 
 function confirmCorrection() {
   if (S.busy) return;
   var vk = S.q.value_kind, extra = {}, typed = $("gold-text").value.trim();
   if (vk === "text") {
-    if (S.sel) { extra.gold_block_id = S.sel.id; extra.gold_value = S.sel.text; }
-    if (typed) extra.gold_value = typed;
+    if (typed) extra.gold_value = typed;  /* typed text wins and drops any block id: id and value never disagree */
+    else if (S.sel) { extra.gold_block_id = S.sel.id; extra.gold_value = S.sel.text; }
   } else if (vk === "vocab") { if (S.vocabPick) extra.gold_value = S.vocabPick; }
   else if ($("gold-date").value) extra.gold_value = $("gold-date").value;
-  if (!extra.gold_value && !extra.gold_block_id) return showBanner(t("err.gold_required"));
+  if (!extra.gold_value && !extra.gold_block_id) { if (S.optional) return submit("wrong", {}); return showBanner(t("err.gold_required")); }
   submit("wrong", extra);
 }
 
@@ -483,6 +499,8 @@ $("reviewer-input").addEventListener("keydown", function (e) { if (e.key === "En
 $("flt-all").addEventListener("click", function () { ["de", "fr", "it"].forEach(function (l) { $("flt-" + l).checked = true; }); });
 $("undo-btn").addEventListener("click", undo);
 $("btn-confirm").addEventListener("click", confirmCorrection);
+$("btn-skip").addEventListener("click", function () { submit("wrong", {}); });
+$("gold-text").addEventListener("input", function () { if (S.sel) { S.sel = null; updateSelBox(); drawOverlay(); } });
 $("btn-cancel").addEventListener("click", leaveCorrection);
 $("page-prev").addEventListener("click", function () { gotoPage(-1); });
 $("page-next").addEventListener("click", function () { gotoPage(1); });
@@ -491,7 +509,8 @@ $("btn-review-unsure").addEventListener("click", function () { S.include = true;
 $("btn-start-over").addEventListener("click", function () { S.include = false; S.q = null; showScreen("start"); });
 window.addEventListener("resize", drawOverlay);
 document.addEventListener("keydown", function (e) {
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+  if (e.repeat) { e.preventDefault(); return; }  /* a held key must never answer the next question */
   var tag = (e.target.tagName || "").toLowerCase(), typing = tag === "input" || tag === "textarea";
   if (S.screen === "question" && !$("correction").hidden) {
     if (e.key === "Enter" && !(tag === "button" || e.target.getAttribute("role") === "button") && !(tag === "textarea" && e.shiftKey)) { e.preventDefault(); confirmCorrection(); }
@@ -499,7 +518,7 @@ document.addEventListener("keydown", function (e) {
   }
   if (typing) return;
   if (e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
-  else if (S.screen === "question" && /^[1-9]$/.test(e.key)) choose(Number(e.key) - 1);
+  else if (S.screen === "question" && /^[1-9]$/.test(e.key)) { e.preventDefault(); choose(Number(e.key) - 1); }
 });
 
 (async function init() {

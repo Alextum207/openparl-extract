@@ -21,7 +21,7 @@ Links sehen Sie die PDF-Seite. Die Stelle, aus der das Programm seinen Wert hat,
 
 ### Die drei typischen Fälle
 1. **Der Wert stimmt.** Klicken Sie **Richtig**.
-2. **Der Wert ist falsch**, im Dokument steht etwas anderes. Klicken Sie **Falsch**. (Den richtigen Wert müssen Sie nicht angeben.)
+2. **Der Wert ist falsch**, im Dokument steht etwas anderes. Klicken Sie **Falsch**. Danach erscheint der freiwillige Schritt "Den richtigen Wert angeben (freiwillig)": Klicken Sie die richtige Stelle auf der Seite an (sie wird blau), tippen Sie ein paar Worte ein, wählen Sie den passenden Entscheid-Knopf oder geben Sie das Datum ein, und klicken Sie auf **Bestätigen**. Wenn Sie nicht korrigieren möchten, klicken Sie **Überspringen** (oder drücken Sie Enter): Ihre Antwort "Falsch" wird trotzdem gespeichert.
 3. **Das Programm hat nichts gefunden, im Dokument steht es aber.** Die Frage lautet dann z. B. "Gibt es im Dokument eine Antwort der Regierung?". Klicken Sie **Ja**, dann auf die richtige Stelle auf der Seite (sie wird blau) und auf **Bestätigen**. Oder tippen Sie ein paar Worte ein. Bei einem Entscheid wählen Sie den passenden Knopf, bei einem Datum geben Sie das Datum ein.
    Steht es wirklich nicht im Dokument: **Nein**.
 
@@ -36,7 +36,7 @@ Wenn Sie es nach kurzer Zeit nicht entscheiden können (z. B. unleserlicher Scan
 | Was Sie sehen | Was Sie klicken |
 |---|---|
 | Wert vom Programm, passt zum Dokument | Richtig |
-| Wert vom Programm, Dokument sagt etwas anderes | Falsch |
+| Wert vom Programm, Dokument sagt etwas anderes | Falsch, dann (freiwillig) die richtige Stelle anklicken und Bestätigen, oder Überspringen |
 | Wert vom Programm, steht nirgends im Dokument | Steht nicht im Dokument |
 | "Gibt es ...?" und es gibt es im Dokument | Ja, dann Stelle anklicken, Bestätigen |
 | "Gibt es ...?" und es gibt es nicht | Nein |
@@ -46,7 +46,7 @@ Wenn Sie es nach kurzer Zeit nicht entscheiden können (z. B. unleserlicher Scan
 ## Tastatur
 - **1, 2, 3, 4**: die Knöpfe von oben nach unten (die Zahl steht auf dem Knopf)
 - **Z**: Rückgängig
-- **Enter**: Bestätigen (beim Angeben des richtigen Werts), **Esc**: Abbrechen
+- **Enter**: Bestätigen (beim Angeben des richtigen Werts; ohne Eingabe bei "Falsch" = Überspringen), **Esc**: Abbrechen
 
 ## Wie lange dauert es?
 Etwa 1 Stunde pro Tag genügt. Jede Antwort wird **sofort automatisch gespeichert** ("Gespeichert" erscheint kurz). Sie können jederzeit aufhören und später genau dort weitermachen.
@@ -58,6 +58,7 @@ Mit **Rückgängig** nehmen Sie Ihre letzte Antwort zurück; mehrmals klicken ge
 - Nicht `gold-prefill` ausführen, solange die App offen ist.
 - Die Gold-Dateien nicht von Hand ändern.
 - Immer den eigenen Namen verwenden (nicht den einer anderen Person).
+- Halten Sie keine Taste gedrückt, sonst werden Fragen versehentlich beantwortet.
 - Die App nicht in zwei Browser-Tabs gleichzeitig benutzen.
 
 ## Fragen?

@@ -47,7 +47,7 @@ class GoldStore:
     def __init__(self, gold_dir: Path, data_dir: Path):
         self.gold_dir, self.data_dir = Path(gold_dir), Path(data_dir)
         self._lock = threading.RLock()
-        self._cache: dict[str, tuple[int, GoldDoc]] = {}  # doc_key -> (mtime_ns, doc)
+        self._cache: dict[str, tuple[tuple, GoldDoc]] = {}  # doc_key -> (mtime_ns, doc)
 
     # ---- loading ----
     def keys(self) -> list[str]:
@@ -59,7 +59,8 @@ class GoldStore:
             raise ReviewError("err.unknown_doc")
         p = self.gold_dir / f"{doc_key}.json"
         with self._lock:
-            m = p.stat().st_mtime_ns
+            st = p.stat()
+            m = (st.st_mtime_ns, st.st_size, st.st_ino)  # coarse mtimes (Windows/OneDrive) alone miss rewrites
             if doc_key not in self._cache or self._cache[doc_key][0] != m:
                 self._cache[doc_key] = (m, GoldDoc.model_validate_json(p.read_text(encoding="utf-8")))
             return self._cache[doc_key][1].model_copy(deep=True)

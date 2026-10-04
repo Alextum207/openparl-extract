@@ -43,6 +43,9 @@
              d: Math.min(p.docs_done + 1, docs), docs: docs };
   }
 
-  return { fill: fill, scaleBox: scaleBox, pickLang: pickLang, optionClass: optionClass,
+  /** True when less than 400 ms passed since a question appeared (guards against key-repeat answers). */
+  function tooSoon(shownAt, now) { return shownAt > 0 && now - shownAt < 400; }
+
+  return { tooSoon: tooSoon, fill: fill, scaleBox: scaleBox, pickLang: pickLang, optionClass: optionClass,
            buttonLabel: buttonLabel, progressNumbers: progressNumbers };
 });

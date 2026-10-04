@@ -21,7 +21,7 @@ A sinistra vede la pagina del PDF. Il punto da cui il programma ha preso il valo
 
 ### I tre casi tipici
 1. **Il valore è giusto.** Clicchi **Corretto**.
-2. **Il valore è sbagliato**, il documento dice altro. Clicchi **Sbagliato**. (Non deve indicare il valore giusto.)
+2. **Il valore è sbagliato**, il documento dice altro. Clicchi **Sbagliato**. Appare quindi il passaggio facoltativo "Indichi il valore giusto (facoltativo)": clicchi sul punto giusto della pagina (diventa blu), scriva poche parole, scelga il pulsante della decisione giusta oppure inserisca la data, poi clicchi su **Conferma**. Se non desidera correggere, clicchi **Salta** (oppure prema Invio): la risposta "Sbagliato" viene salvata comunque.
 3. **Il programma non ha trovato nulla, ma nel documento c'è.** La domanda è ad esempio "Nel documento c'è una risposta del governo?". Clicchi **Sì**, poi sul punto giusto della pagina (diventa blu) e su **Conferma**. Oppure scriva poche parole. Per una decisione scelga il pulsante giusto, per una data inserisca la data.
    Se nel documento non c'è davvero: **No**.
 
@@ -36,7 +36,7 @@ Quando dopo poco non riesce a decidere (ad es. scansione illeggibile). La domand
 | Cosa vede | Cosa clicca |
 |---|---|
 | Valore del programma, corrisponde al documento | Corretto |
-| Valore del programma, il documento dice altro | Sbagliato |
+| Valore del programma, il documento dice altro | Sbagliato, poi (facoltativo) il punto giusto sulla pagina e Conferma, oppure Salta |
 | Valore del programma, nel documento non c'è | Non è nel documento |
 | "C'è ...?" e nel documento c'è | Sì, poi il punto sulla pagina, Conferma |
 | "C'è ...?" e nel documento non c'è | No |
@@ -46,7 +46,7 @@ Quando dopo poco non riesce a decidere (ad es. scansione illeggibile). La domand
 ## Tastiera
 - **1, 2, 3, 4**: i pulsanti dall'alto in basso (il numero è scritto sul pulsante)
 - **Z**: Annulla
-- **Invio**: Conferma (quando indica il valore giusto), **Esc**: interrompe l'inserimento
+- **Invio**: Conferma (quando indica il valore giusto; senza inserimento dopo "Sbagliato" = Salta), **Esc**: interrompe l'inserimento
 
 ## Quanto tempo ci vuole?
 Basta circa 1 ora al giorno. Ogni risposta viene **salvata subito in automatico** (compare brevemente "Salvato"). Può smettere in qualsiasi momento e riprendere esattamente da dove era rimasta/o.
@@ -58,6 +58,7 @@ Con **Annulla** ritira la sua ultima risposta; cliccando più volte torna ancora
 - Non eseguire `gold-prefill` mentre l'app è aperta.
 - Non modificare a mano i file gold.
 - Usare sempre il proprio nome (non quello di un'altra persona).
+- Non tenga premuto un tasto: potrebbe rispondere a domande per errore.
 - Non usare l'app in due schede del browser contemporaneamente.
 
 ## Domande?

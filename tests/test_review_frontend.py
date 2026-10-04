@@ -166,3 +166,70 @@ def test_inline_script_parses(tmp_path):
     js.write_text(re.findall(r"<script>(.*?)</script>", HTML, re.S)[0], encoding="utf-8")
     r = subprocess.run(["node", "--check", str(js)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
+
+
+# ---------- fix round 1: review findings ----------
+def _func(name):
+    m = re.search(r"function " + name + r"\(.*?\n\}\n", HTML, re.S)
+    assert m, name
+    return m.group(0)
+
+
+def _keydown():
+    i = HTML.index('document.addEventListener("keydown"')
+    return HTML[i:HTML.index("\n});", i)]
+
+
+def test_keydown_prevents_default_before_shortcut_and_ignores_repeat_and_ime():
+    h = _keydown()
+    assert re.search(r"preventDefault\(\);\s*choose\(", h)  # digit must not leak into the focused field
+    assert "e.repeat" in h and h.index("e.repeat") < h.index("choose(")
+    assert "isComposing" in h
+
+
+def test_choose_ignores_clicks_right_after_a_question_is_shown():
+    assert "Logic.tooSoon" in _func("choose") and "shownAt" in _func("showQuestion")
+
+
+def test_gold_has_single_source_of_truth():
+    assert 'gold-text").value = ""' in _func("selectBlock")
+    assert re.search(r'\$\("gold-text"\)\.addEventListener\("input"', HTML)
+    c = _func("confirmCorrection")
+    assert "typed" in c and "gold_block_id" in c
+
+
+def test_optional_correction_step_for_wrong_on_found_value():
+    c = _func("choose")
+    assert "optional" in c.lower()
+    assert 'id="btn-skip"' in HTML and 'data-testid="btn-skip"' in HTML
+    assert "correction.optional_title" in HTML and "btn.skip" in HTML
+
+
+def test_setlang_and_loadquestion_guard_in_flight_requests():
+    assert "S.busy" in _func("setLang")
+    assert "qtoken" in _func("loadQuestion")
+
+
+def test_narrow_header_not_sticky():
+    assert re.search(r"@media \(max-width: 900px\)[^@]*header\s*\{[^}]*position:\s*static", HTML, re.S)
+
+
+def test_new_i18n_keys_all_languages():
+    for lang in LANGS:
+        for k in ("btn.skip", "correction.optional_title"):
+            assert STRINGS[lang].get(k), (lang, k)
+
+
+def test_guides_describe_optional_step():
+    docs = Path(__file__).resolve().parents[1] / "docs"
+    assert "freiwillig" in (docs / "gold_review_anleitung.md").read_text(encoding="utf-8")
+    assert "facoltativ" in (docs / "gold_review_guida.md").read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
+def test_too_soon_in_node():
+    script = f"const L = require({json.dumps(str(LOGIC))}); const a = require('assert');" \
+             "a.strictEqual(L.tooSoon(1000, 1200), true); a.strictEqual(L.tooSoon(1000, 1500), false);" \
+             "a.strictEqual(L.tooSoon(0, 5), false);"
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr

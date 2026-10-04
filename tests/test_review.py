@@ -541,3 +541,17 @@ def test_cli_review_needs_gold(tmp_path):
     from openparl_extract.cli import app
     r = CliRunner().invoke(app, ["review", "--data-dir", str(tmp_path), "--no-open"])
     assert r.exit_code == 1 and "gold-prefill" in r.output and "pick-corpus" in r.output
+
+
+def test_cache_sees_rewrite_with_same_mtime(env):
+    import os
+    data, gold = env
+    s = GoldStore(gold, data)
+    p = gold / "ZH_100.json"
+    s.get("ZH_100")
+    st = p.stat()
+    d = GoldDoc.model_validate_json(p.read_text(encoding="utf-8"))
+    d.entries = d.entries[:-1]
+    p.write_text(d.model_dump_json(), encoding="utf-8")
+    os.utime(p, ns=(st.st_atime_ns, st.st_mtime_ns))  # coarse-timestamp filesystem: same mtime
+    assert len(s.get("ZH_100").entries) == len(d.entries)
