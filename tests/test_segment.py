@@ -142,6 +142,41 @@ def test_real_ti_interpellanza():
     r = segment(mk(("INTERPELLANZA (art. 97 LGC)", "heading"), "Presentata da: X",
                    ("Motivazione riguardo l'interesse pubblico e l'urgenza [cfr. art. 97 cpv. 3 LGC]", "heading"),
                    ("Testo:", "heading"), "Rileviamo", "Si chiede quindi al Consiglio di Stato:", "domanda"))
-    assert sec(r, "justification") == ["p1_b2"]
-    assert sec(r, "affair_text") == ["p1_b0", "p1_b1", "p1_b3", "p1_b4"]
+    # fix round 1: affair_text can no longer reopen after justification, so "Testo:" stays in justification
+    assert sec(r, "justification") == ["p1_b2", "p1_b3", "p1_b4"]
+    assert sec(r, "affair_text") == ["p1_b0", "p1_b1"]
     assert sec(r, "questions") == ["p1_b5", "p1_b6"]
+
+
+# --- review fix round 1 ---
+def test_anfrage_title_is_affair_text_not_questions():
+    r = segment(mk("Anfrage Müller betreffend X", ("Fragen", "heading"), "q"))
+    assert sec(r, "affair_text") == ["p1_b0"] and sec(r, "questions") == ["p1_b1", "p1_b2"]
+    r = segment(mk("Anfrage Müller betreffend X", "text"))
+    assert sec(r, "questions") == []
+
+
+def test_affair_text_cannot_reopen_after_other_section():
+    for t in ("Motion abgelehnt.", "Postulat", "Testo di legge"):
+        for typ in ("paragraph", "heading"):
+            r = segment(mk(("Beschluss", "heading"), (t, typ), "weiter"))
+            assert sec(r, "decision") == ["p1_b0", "p1_b1", "p1_b2"], (t, typ)
+            assert sec(r, "affair_text") == []
+
+
+def test_bare_annex_word_in_sentence_stays():
+    r = segment(mk(("Fragen", "heading"), "Anhang zum Bericht ist beigelegt.", "x"))
+    assert sec(r, "annex") == [] and len(sec(r, "questions")) == 3
+    r = segment(mk("vorher", ("Anhang", "heading"), "x"))
+    assert sec(r, "annex") == ["p1_b1", "p1_b2"]
+    r = segment(mk("vorher", "Anhang 1", "x"))  # short non-sentence line still opens
+    assert sec(r, "annex") == ["p1_b1", "p1_b2"]
+
+
+def test_bare_antwort_rules():
+    long = "Antwort auf Frage 1 der Interpellation betreffend die Lage im Kanton"
+    assert sec(segment(mk("v", long, "x")), "executive_answer") == []
+    assert sec(segment(mk("v", (long, "heading"), "x")), "executive_answer") == ["p1_b1", "p1_b2"]
+    assert sec(segment(mk("v", "Antwort auf Frage 1", "x")), "executive_answer") == ["p1_b1", "p1_b2"]
+    assert sec(segment(mk("v", "Antwort des Regierungsrates zur Lage im Kanton und weiteres Vorgehen", "x")),
+               "executive_answer") == ["p1_b1", "p1_b2"]

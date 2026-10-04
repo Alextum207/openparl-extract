@@ -5,10 +5,11 @@ import unicodedata
 from pydantic import BaseModel
 
 from openparl_extract.parse.blocks import Block
-from openparl_extract.segment.patterns import PATTERNS
+from openparl_extract.segment.patterns import BARE_PATTERNS, PATTERNS
 
 SECTIONS = ("affair_text", "justification", "questions", "executive_answer", "decision", "annex", "other")
 MAX_HEADING_LEN = 120
+MAX_BARE_LEN = 40
 
 _NUMBERING = re.compile(r"^(?:\d+(?:\.\d+)*\.?|[a-z]\)|[ivx]+\.)\s+")
 
@@ -29,13 +30,18 @@ def normalise(text: str) -> str:
     return t
 
 
-def heading_section(b: Block) -> str | None:
+def heading_section(b: Block, affair_text_ok: bool = True) -> str | None:
     if b.type in ("image", "table", "signature_stamp"):
         return None
     if b.type != "heading" and len(b.text) > MAX_HEADING_LEN:
         return None
     t = normalise(b.text)
-    return next((s for s, p in PATTERNS.items() if p.match(t)), None)
+    for s, p in PATTERNS.items():
+        if p.match(t) and (affair_text_ok or s != "affair_text"):
+            return s
+    if b.type == "heading" or (len(t) <= MAX_BARE_LEN and not t.endswith(".")):
+        return next((s for s, p in BARE_PATTERNS.items() if p.match(t)), None)
+    return None
 
 
 def segment(blocks: list[Block]) -> SegmentResult:
@@ -44,7 +50,7 @@ def segment(blocks: list[Block]) -> SegmentResult:
     headings: list[tuple[str, str]] = []
     current = "affair_text"
     for b in blocks:
-        h = heading_section(b)
+        h = heading_section(b, affair_text_ok=current == "affair_text")
         if h:
             current = h
             headings.append((b.id, h))
