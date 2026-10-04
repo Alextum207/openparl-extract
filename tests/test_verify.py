@@ -4,7 +4,7 @@ from openparl_extract.extract.schemas import (
     ExtractedAnswer, ExtractedDecision, ExtractedItem, ExtractedQuestion, ExtractionResult)
 from openparl_extract.models import DecisionOutcome
 from openparl_extract.parse.blocks import Block
-from openparl_extract.verify.verify import check_date_order, verify, verify_item
+from openparl_extract.verify.verify import check_date_order, locate, verify, verify_item
 
 B1 = Block(id="p1_b0", page=1, text="Der Regierungsrat beantragt die Ablehnung der Motion.")
 B2 = Block(id="p2_b0", page=2, text="Der Verwaltungs-\nrat   hat   am 3.5.2024 beschlossen.")
@@ -149,7 +149,39 @@ def test_multiple_answers_kept():
     r = verify(ExtractionResult(questions=[q("1")], answers=[a("1"), a("1")]), BLOCKS)
     assert len(r.answers) == 2 and r.answers[0].question_id == "1"
     assert r.review_flags.count("multiple_answers:1") == 1
-    assert r.answers[1].text.review_flag is None or r.answers[1].text.status == "extracted"
+    assert r.answers[0].text.review_flag is None
+    assert r.answers[1].text.review_flag == "multiple_answers:1"
+    r = verify(ExtractionResult(questions=[q("1")], answers=[a("1"), a("1"), a("1")]), BLOCKS)
+    assert [x.text.review_flag for x in r.answers] == [None, "multiple_answers:1", "multiple_answers:1"]
+
+
+def test_structural_flag_joined_with_item_flag():
+    # review_flag holds all flags of that value joined with ';'
+    bad = ExtractedAnswer(question_id="7", text=item("zzz", "p1_b0", "zzz zzz zzz zzz"))
+    r = verify(ExtractionResult(questions=[q("1")], answers=[bad]), BLOCKS)
+    assert r.answers[0].text.review_flag == "quote_not_found:p1_b0;answer_unknown_question:7"
+
+
+def test_value_with_invented_extra_text_rejected():
+    v, flags = verify_item(item("Der Regierungsrat beantragt die Ablehnung der Motion. Er will zudem 5 Mio. Franken sprechen.",
+                                "p1_b0", "Ablehnung der Motion"), BY_ID, 90)
+    assert v.status == "not_found" and flags == ["value_not_supported"]
+    v, flags = verify_item(item("Der Rat lehnt die Motion ab und kritisiert die SVP scharf", "p1_b0", "Motion"), BY_ID, 90)
+    assert v.status == "not_found" and flags == ["value_not_supported"]
+
+
+def test_quote_longer_than_block_rejected():
+    b = {"p1_b0": Block(id="p1_b0", page=1, text="Ja.")}
+    t = "Ja. Der Regierungsrat lehnt die Motion vollumfaenglich ab."
+    v, flags = verify_item(item(t, "p1_b0", t), b, 90)
+    assert v.status == "not_found" and v.value is None and flags == ["quote_not_found:p1_b0"]
+
+
+def test_fuzzy_span_trimmed():
+    b = Block(id="p1_b0", page=1, text="xx die Ablehnung der Motion folgt")
+    s, e = locate("die Ablehnug der Motion", b, 90)
+    got = b.text[s:e]
+    assert got == got.strip() and "Ablehnung der Motion" in got
 
 
 def test_failed_question_stays():

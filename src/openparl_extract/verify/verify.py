@@ -63,10 +63,18 @@ def locate(quote: str, block: Block, threshold: int) -> tuple[int, int] | None:
     if pos >= 0:
         s, e = pos, pos + len(nq)
     else:
+        if len(nq) > len(nb):  # alignment would swap the arguments and match the block inside the quote
+            return None
         al = fuzz.partial_ratio_alignment(nq, nb)
-        if al is None or al.score < threshold or al.dest_end <= al.dest_start:
+        if al is None or al.score < threshold:
             return None
         s, e = al.dest_start, al.dest_end
+        while s < e and nb[s] == " ":
+            s += 1
+        while e > s and nb[e - 1] == " ":
+            e -= 1
+        if e <= s or fuzz.ratio(nq, nb[s:e]) < threshold:  # the WHOLE quote must be matched
+            return None
     # end offset: original index of the last matched char + 1 (extends over a trailing multi-char token)
     last = idx[e - 1]
     m = _TOKEN.match(block.text, last)
@@ -95,7 +103,9 @@ def _verified_quote(item: ExtractedItem | None, by_id: dict[str, Block], thresho
 
 
 def _supported(value: str, quote: str, threshold: int) -> bool:
-    return fuzz.partial_ratio(normalise(value)[0], normalise(quote)[0]) >= threshold
+    nv, nq = normalise(value)[0], normalise(quote)[0]
+    # value may be a part of the quote, but must not add text beyond it (partial_ratio alone scores 100 then)
+    return len(nv) <= len(nq) * 1.1 and fuzz.partial_ratio(nv, nq) >= threshold
 
 
 def verify_item(item: ExtractedItem | None, blocks_by_id: dict[str, Block], threshold: int = 90
@@ -177,19 +187,18 @@ def _verify_qa(result: ExtractionResult, by_id, threshold):
     per_q: dict[str, int] = {}
     for a in result.answers:
         text, f = verify_item(a.text, by_id, threshold)
-        qid, flag = a.question_id, None
+        qid, flag = a.question_id, None  # review_flag of a value = all its flags joined with ";"
         if qid is not None and counts.get(qid, 0) > 1:
             qid, flag = None, f"answer_ambiguous_question:{a.question_id}"
         elif qid is not None and qid not in counts:
             qid, flag = None, f"answer_unknown_question:{a.question_id}"
         elif qid is not None:
             per_q[qid] = per_q.get(qid, 0) + 1
-            if per_q[qid] == 2:
+            if per_q[qid] >= 2:
                 flag = f"multiple_answers:{qid}"
         if flag:
             flags.append(flag)
-            if text.review_flag is None:
-                text.review_flag = flag
+            text.review_flag = flag if text.review_flag is None else f"{text.review_flag};{flag}"
         answers.append(Answer(question_id=qid, text=text))
         flags += f
     return questions, answers, flags
