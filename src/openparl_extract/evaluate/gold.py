@@ -86,3 +86,24 @@ def save_gold(doc: GoldDoc, dir: Path) -> Path:
     p = dir / f"{doc.body_key}_{doc.affair_id}.json"
     p.write_text(doc.model_dump_json(indent=2), encoding="utf-8")
     return p
+
+
+def prefill_gold(affair: Affair, gold_dir: Path) -> Literal["created", "extended", "unchanged"]:
+    """Draft gold file for one pipeline output. Existing entries (reviewed or not) are never touched; only field
+    keys that are not yet in the file are appended, so re-running after a pipeline change is safe."""
+    s = affair.source
+    p = Path(gold_dir) / f"{s.body_key or 'unknown'}_{s.openparldata_id}.json"
+    drafts = entries_for_affair(affair)
+    if not p.exists():
+        save_gold(GoldDoc(affair_id=s.openparldata_id, body_key=s.body_key or "unknown", level=s.level,
+                          language=s.language, is_scanned=s.is_scanned, affair_type=affair.affair_type.value,
+                          entries=drafts), gold_dir)
+        return "created"
+    doc = GoldDoc.model_validate_json(p.read_text(encoding="utf-8"))
+    have = {e.field for e in doc.entries}
+    new = [e for e in drafts if e.field not in have]
+    if not new:
+        return "unchanged"
+    doc.entries += new
+    save_gold(doc, gold_dir)
+    return "extended"

@@ -255,3 +255,54 @@ def test_hallucinated_quote_is_flagged(work):
     a = pipeline(work, fx)
     assert a.questions[0].text.status == "not_found" and a.questions[0].text.value is None
     assert any(f.startswith("quote_not_found") for f in a.review_flags)
+
+
+# ---- corpus / gold-prefill ----
+def test_ingest_corpus_end_to_end(tmp_path):
+    from openparl_extract.evaluate.corpus import CorpusEntry, write_corpus
+    e = CorpusEntry(affair_id=1001, body_key="GL", level="cantonal", language="de", affair_type="interpellation",
+                    doc_id=1, n_pdf_docs=1, has_plain_text=False, scanned_guess=True, lifecycle_complete=True,
+                    reason="t")
+    write_corpus(tmp_path / "corpus.json", [e, e.model_copy(update={"affair_id": 1002})], {})
+    d = tmp_path / "data"
+    r = run("ingest", "--corpus", tmp_path / "corpus.json", "--limit", 1, "--data-dir", d)
+    assert "1 done" in r.output and not (d / "raw/GL/1002").exists()
+    m = json.loads((d / "raw/GL/1001/manifest.json").read_text(encoding="utf-8"))
+    assert m["primary_doc_id"] == 1 and (d / "raw/GL/1001/doc_1.pdf").read_bytes() == PDF
+    assert "1 skipped" in run("ingest", "--corpus", tmp_path / "corpus.json", "--limit", 1, "--data-dir", d).output
+
+
+def test_pick_corpus_command(tmp_path, monkeypatch):
+    from openparl_extract.evaluate import corpus as C
+    monkeypatch.setattr(cli, "pick_corpus", lambda client, n, seed, max_requests: (
+        [], {"n": 0, "n_total": n, "seed": seed, "requests": 1, "level": {}, "language": {}, "scanned_guess": 0,
+             "affair_type": {}, "unmet": [{"level": "federal", "language": "it", "wanted": 2, "got": 0,
+                                           "reason": "x"}], "errors": []}))
+    out = tmp_path / "c.json"
+    r = run("pick-corpus", "--n", 9, "--seed", 3, "--max-requests", 5, "--out", out)
+    assert "federal/it: 0/2" in r.output and out.exists()
+    assert C.load_corpus(out)[1]["seed"] == 3
+
+
+def test_gold_prefill_creates_keeps_reviewed_and_is_idempotent(work):
+    from openparl_extract.evaluate.gold import load_gold, save_gold
+    a = pipeline(work, fixtures_for(work))
+    r = run("gold-prefill", "--data-dir", work)
+    assert "1 created" in r.output
+    g = load_gold(work / "gold")
+    assert len(g) == 1 and g[0].body_key == "GL" and g[0].level.value == "cantonal" and g[0].language.value == "de"
+    keys = [e.field for e in g[0].entries]
+    assert {"question:q1", "question:q2", "answer:0", "decision.outcome", "affair_text"} <= set(keys)
+    assert len(keys) == len(set(keys)) and all(e.verdict == "unreviewed" for e in g[0].entries)
+    assert "0 created, 0 extended, 1 untouched" in run("gold-prefill", "--data-dir", work).output
+    # reviewer sets a verdict; the pipeline output then gains a second answer
+    g[0].entries[0].verdict, g[0].entries[0].note = "correct", "ok"
+    save_gold(g[0], work / "gold")
+    p = work / "output/GL/1001/affair.json"
+    a.answers.append(a.answers[0].model_copy(deep=True))
+    p.write_text(a.model_dump_json(), encoding="utf-8")
+    assert "0 created, 1 extended, 0 untouched" in run("gold-prefill", "--data-dir", work).output
+    g2 = load_gold(work / "gold")[0]
+    assert g2.entries[0].verdict == "correct" and g2.entries[0].note == "ok"
+    assert [e.field for e in g2.entries][:len(keys)] == keys and g2.entries[-1].field == "answer:1"
+    assert "0 extended, 1 untouched" in run("gold-prefill", "--data-dir", work).output

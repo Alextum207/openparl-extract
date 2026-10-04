@@ -93,6 +93,38 @@ def ingest(client: OpenParlDataClient, data: Path, ids: list[str] | None = None,
     return s
 
 
+def ingest_corpus(client: OpenParlDataClient, data: Path, entries: list, force: bool = False) -> Summary:
+    """Ingest every corpus entry with its chosen doc as the primary PDF."""
+    s = Summary("ingest")
+    raw = Path(data) / "raw"
+    for e in entries:
+        aid = str(e.affair_id)
+        have = next(iter(raw.glob(f"*/{aid}/affair.json")), None)
+        try:
+            if have and not force:
+                key, s.skipped = (have.parent.parent.name, aid), s.skipped + 1
+            else:
+                d = ingest_affair(client, aid, raw, primary_doc_id=e.doc_id)
+                key, s.done = (d.parent.name, d.name), s.done + 1
+            s.keys.append(key)
+        except Exception as ex:
+            log_error(data, (e.body_key, aid), "ingest", ex)
+            s.failed += 1
+    if s.done or not (raw / "bodies.json").exists():
+        save_bodies(client, data)
+    return s
+
+
+def prefill_all(data: Path, gold_dir: Path) -> dict[str, int]:
+    """Gold drafts for every data/output/*/*/affair.json; counts of created / extended / unchanged."""
+    from openparl_extract.evaluate.gold import prefill_gold
+    from openparl_extract.models import Affair
+    counts = {"created": 0, "extended": 0, "unchanged": 0}
+    for p in sorted((Path(data) / "output").glob("*/*/affair.json")):
+        counts[prefill_gold(Affair.model_validate_json(p.read_text(encoding="utf-8")), gold_dir)] += 1
+    return counts
+
+
 # ---------- stages ----------
 def _read(p: Path, model):
     return model.model_validate_json(p.read_text(encoding="utf-8")) if p.exists() else None

@@ -7,6 +7,7 @@ import typer
 
 from openparl_extract import pipeline as pl
 from openparl_extract.config import Config, load_config
+from openparl_extract.evaluate.corpus import format_summary, load_corpus, pick_corpus, write_corpus
 from openparl_extract.evaluate.gold import load_gold
 from openparl_extract.evaluate.matrix import write_matrix
 from openparl_extract.evaluate.metrics import (ProvenanceStats, aggregate_provenance, load_outputs,
@@ -78,12 +79,24 @@ def _client(mock: bool, fixtures: Optional[Path]):
 
 @app.command()
 def ingest(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Option(None, "--body-key"),
-           limit: int = typer.Option(10, "--limit"), offset: int = typer.Option(0, "--offset"),
-           force: bool = typer.Option(False, "--force"), data_dir: Path = DATA):
-    """Fetch affairs (explicit ids, or a body_key listing: only those with documents) into data/raw."""
+           limit: Optional[int] = typer.Option(None, "--limit", help="default 10 (all corpus entries with --corpus)"),
+           offset: int = typer.Option(0, "--offset"), force: bool = typer.Option(False, "--force"),
+           corpus: Optional[Path] = typer.Option(None, "--corpus", help="corpus.json from pick-corpus"),
+           data_dir: Path = DATA):
+    """Fetch affairs (explicit ids, a body_key listing, or a --corpus file) into data/raw."""
+    if corpus:
+        try:
+            entries, _ = load_corpus(corpus)
+        except (OSError, ValueError) as e:
+            raise _fail(f"cannot read corpus {corpus}: {e}")
+        s = pl.ingest_corpus(make_api_client(load_config()), data_dir, entries[offset:][:limit], force)
+        _echo(s)
+        if s.exit_code(False):
+            raise typer.Exit(1)
+        return
     if not (ids or body_key):
-        raise _fail("give AFFAIR_ID(s) or --body-key")
-    s = pl.ingest(make_api_client(load_config()), data_dir, ids, body_key, limit, offset, force)
+        raise _fail("give AFFAIR_ID(s), --body-key or --corpus")
+    s = pl.ingest(make_api_client(load_config()), data_dir, ids, body_key, limit or 10, offset, force)
     _echo(s)
     if s.exit_code(bool(ids)):
         raise typer.Exit(1)
@@ -134,9 +147,10 @@ def run_all(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Opti
 
 
 @app.command()
-def evaluate(data_dir: Path = DATA, gold_dir: Path = typer.Option(Path("data/gold"), "--gold-dir"),
-             out: Path = typer.Option(Path("data/reports"), "--out")):
+def evaluate(data_dir: Path = DATA, gold_dir: Optional[Path] = typer.Option(None, "--gold-dir", help="default <data-dir>/gold"),
+             out: Optional[Path] = typer.Option(None, "--out", help="default data/reports")):
     """Metrics report and feasibility matrix for data/output against the gold set (may be empty)."""
+    gold_dir, out = gold_dir or data_dir / "gold", out or Path("data/reports")
     out_dir = data_dir / "output"
     affairs = load_outputs(out_dir)
     gold = load_gold(gold_dir) if gold_dir.exists() else []
@@ -154,6 +168,25 @@ def evaluate(data_dir: Path = DATA, gold_dir: Path = typer.Option(Path("data/gol
     typer.echo(f"evaluate: {len(affairs)} affairs, {len(gold)} gold docs; precision={f('precision')} "
                f"recall={f('recall')} hallucination_rate={f('hallucination_rate')}")
     typer.echo(f"feasibility matrix: {out / 'feasibility_matrix.md'}")
+
+
+@app.command("pick-corpus")
+def pick_corpus_cmd(n: int = typer.Option(45, "--n"), seed: int = typer.Option(7, "--seed"),
+                    max_requests: int = typer.Option(300, "--max-requests"),
+                    out: Path = typer.Option(Path("data/corpus.json"), "--out")):
+    """Pick stratified gold-set candidates (level x language x scanned x type) from the live API."""
+    entries, summary = pick_corpus(make_api_client(load_config()), n, seed, max_requests)
+    write_corpus(out, entries, summary)
+    typer.echo(format_summary(summary))
+    typer.echo(f"corpus written: {out}")
+
+
+@app.command("gold-prefill")
+def gold_prefill(data_dir: Path = DATA,
+                 gold_dir: Optional[Path] = typer.Option(None, "--gold-dir", help="default <data-dir>/gold")):
+    """Draft gold files from data/output; existing entries (reviewed ones too) are never overwritten."""
+    c = pl.prefill_all(data_dir, gold_dir or data_dir / "gold")
+    typer.echo(f"gold-prefill: {c['created']} created, {c['extended']} extended, {c['unchanged']} untouched")
 
 
 @app.command("export-schema")

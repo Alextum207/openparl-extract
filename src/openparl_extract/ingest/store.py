@@ -26,7 +26,7 @@ def _write_json(path: Path, obj) -> None:
     path.write_text(json.dumps(obj, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
-def save_affair(affair: dict, pdfs: dict[int, bytes], root: Path) -> Path:
+def save_affair(affair: dict, pdfs: dict[int, bytes], root: Path, primary_doc_id: int | None = None) -> Path:
     d = Path(root) / str(affair["body_key"]) / str(affair["id"])
     d.mkdir(parents=True, exist_ok=True)
     _write_json(d / "affair.json", affair)
@@ -42,7 +42,7 @@ def save_affair(affair: dict, pdfs: dict[int, bytes], root: Path) -> Path:
             "pdf_sha256": sha256_bytes(pdf) if pdf is not None else None,
             "has_plain_text": bool(doc.get("text")),
         })
-    primary = next((x["id"] for x in docs if _is_pdf(x)), None)
+    primary = primary_doc_id or next((x["id"] for x in docs if _is_pdf(x)), None)
     flags = ["no_document"] if not docs else ["no_pdf"] if primary is None else []
     _write_json(d / "manifest.json", {
         "affair_id": affair["id"], "body_key": affair["body_key"], "number": affair.get("number"),
@@ -54,8 +54,16 @@ def load_manifest(path: Path) -> dict:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def ingest_affair(client: OpenParlDataClient, affair_id: int | str, root: Path) -> Path:
+def ingest_affair(client: OpenParlDataClient, affair_id: int | str, root: Path,
+                  primary_doc_id: int | None = None) -> Path:
+    """primary_doc_id: use this PDF as the one the pipeline processes (must be one of the affair's pdf docs).
+    Only that PDF is downloaded unless it is already the first pdf (then all are, as without the argument)."""
     affair = client.get_affair(affair_id)
-    pdfs = {d["id"]: client.download_pdf(d["url_oparl"]) for d in _docs(affair)
-            if _is_pdf(d) and d.get("url_oparl")}
-    return save_affair(affair, pdfs, root)
+    docs = [d for d in _docs(affair) if _is_pdf(d) and d.get("url_oparl")]
+    if primary_doc_id is not None:
+        if primary_doc_id not in {d["id"] for d in docs}:
+            raise ValueError(f"doc {primary_doc_id} is not a pdf document of affair {affair_id}")
+        if primary_doc_id != docs[0]["id"]:
+            docs = [d for d in docs if d["id"] == primary_doc_id]
+    pdfs = {d["id"]: client.download_pdf(d["url_oparl"]) for d in docs}
+    return save_affair(affair, pdfs, root, primary_doc_id)
