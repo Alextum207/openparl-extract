@@ -55,6 +55,7 @@ def _merge(group: str, parts: list, errors: list[str]):
 def extract_affair(segments: SegmentResult, blocks: list[Block], client: LLMClient, model: str = "apertus-8b",
                    max_chars: int = 12000, prompt_versions: dict[str, str] | None = None,
                    language: str | None = None) -> ExtractionResult:
+    """Configuration errors (missing/pinned-missing prompt template) raise; data and LLM errors are recorded in errors."""
     result = ExtractionResult()
     pinned = prompt_versions or {}
     for group in ORDER:
@@ -73,6 +74,9 @@ def extract_affair(segments: SegmentResult, blocks: list[Block], client: LLMClie
                 payload = client.extract(prompt, group_schema(group), model)
             except Exception as e:
                 result.errors.append(f"client_error:{group}:{type(e).__name__}")
+                continue
+            if not isinstance(payload, dict):
+                result.errors.append(f"invalid_payload:{group}:not_a_dict")
                 continue
             try:
                 parts.append(adapter.validate_python(payload.get(group)) if payload.get(group) is not None

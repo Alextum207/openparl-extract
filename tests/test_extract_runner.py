@@ -173,3 +173,19 @@ def test_end_to_end_with_mock_and_verify():
     fx["affair_text"] = {"affair_text": it("Velowege abschaffen", "p1_b1")}
     v2 = verify(extract_affair(s, blocks, MockLLMClient(fx)), blocks)
     assert v2.affair_text.status == "not_found" and "quote_not_found:p1_b1" in v2.review_flags
+
+
+@pytest.mark.parametrize("bad", [[], ["x"], "text", None, 7])
+@pytest.mark.parametrize("bad_group", ["questions", "decision"])
+def test_non_dict_payload_is_recorded_and_run_continues(bad, bad_group):
+    class Bad(MockLLMClient):
+        def extract(self, prompt, json_schema, model="apertus-8b"):
+            if f"FIELD_GROUP: {bad_group}" in prompt:
+                return bad
+            return super().extract(prompt, json_schema, model)
+
+    r = extract_affair(SEG, BLOCKS, Bad(FIX))
+    assert f"invalid_payload:{bad_group}:not_a_dict" in r.errors
+    assert getattr(r, bad_group) in (None, [])
+    assert r.affair_text is not None and r.justification is not None
+    assert r.executive_reasoning is not None
