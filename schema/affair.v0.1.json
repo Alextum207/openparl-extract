@@ -1,0 +1,842 @@
+{
+  "$defs": {
+    "Actor": {
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/Value_str_"
+        },
+        "role": {
+          "$ref": "#/$defs/Value_ActorRole_"
+        },
+        "party": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Value_str_"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "faction": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Value_str_"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "name",
+        "role"
+      ],
+      "title": "Actor",
+      "type": "object"
+    },
+    "ActorRole": {
+      "enum": [
+        "submitter",
+        "co_signatory",
+        "spokesperson",
+        "executive_respondent",
+        "committee"
+      ],
+      "title": "ActorRole",
+      "type": "string"
+    },
+    "AffairType": {
+      "enum": [
+        "motion",
+        "postulate",
+        "interpellation",
+        "written_question",
+        "parliamentary_initiative",
+        "cantonal_initiative",
+        "popular_initiative",
+        "resolution",
+        "other"
+      ],
+      "title": "AffairType",
+      "type": "string"
+    },
+    "Answer": {
+      "properties": {
+        "question_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Question Id"
+        },
+        "text": {
+          "$ref": "#/$defs/Value_str_"
+        }
+      },
+      "required": [
+        "text"
+      ],
+      "title": "Answer",
+      "type": "object"
+    },
+    "Decision": {
+      "properties": {
+        "outcome": {
+          "$ref": "#/$defs/Value_DecisionOutcome_"
+        },
+        "date": {
+          "$ref": "#/$defs/Value_date_"
+        },
+        "body": {
+          "$ref": "#/$defs/Value_str_"
+        }
+      },
+      "required": [
+        "outcome",
+        "date",
+        "body"
+      ],
+      "title": "Decision",
+      "type": "object"
+    },
+    "DecisionOutcome": {
+      "enum": [
+        "adopted",
+        "partially_adopted",
+        "rejected",
+        "withdrawn",
+        "written_off",
+        "referred_to_executive",
+        "no_decision",
+        "unknown"
+      ],
+      "title": "DecisionOutcome",
+      "type": "string"
+    },
+    "Language": {
+      "enum": [
+        "de",
+        "fr",
+        "it",
+        "rm"
+      ],
+      "title": "Language",
+      "type": "string"
+    },
+    "Level": {
+      "enum": [
+        "federal",
+        "cantonal",
+        "municipal"
+      ],
+      "title": "Level",
+      "type": "string"
+    },
+    "ProceduralEvent": {
+      "properties": {
+        "date": {
+          "$ref": "#/$defs/Value_date_"
+        },
+        "event": {
+          "$ref": "#/$defs/Value_str_"
+        },
+        "state": {
+          "$ref": "#/$defs/Value_ProceduralState_"
+        }
+      },
+      "required": [
+        "date",
+        "event",
+        "state"
+      ],
+      "title": "ProceduralEvent",
+      "type": "object"
+    },
+    "ProceduralState": {
+      "enum": [
+        "submitted",
+        "answered",
+        "debated",
+        "referred",
+        "decided",
+        "written_off",
+        "withdrawn",
+        "pending"
+      ],
+      "title": "ProceduralState",
+      "type": "string"
+    },
+    "Provenance": {
+      "properties": {
+        "page": {
+          "title": "Page",
+          "type": "integer"
+        },
+        "block_id": {
+          "title": "Block Id",
+          "type": "string"
+        },
+        "char_start": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Char Start"
+        },
+        "char_end": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Char End"
+        },
+        "quote": {
+          "title": "Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "page",
+        "block_id",
+        "quote"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "Question": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "$ref": "#/$defs/Value_str_"
+        }
+      },
+      "required": [
+        "id",
+        "text"
+      ],
+      "title": "Question",
+      "type": "object"
+    },
+    "Reference": {
+      "description": "Annex, table or image kept as a pointer, not interpreted.",
+      "properties": {
+        "page": {
+          "title": "Page",
+          "type": "integer"
+        },
+        "caption": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Caption"
+        },
+        "block_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Block Id"
+        }
+      },
+      "required": [
+        "page"
+      ],
+      "title": "Reference",
+      "type": "object"
+    },
+    "RelatedAffair": {
+      "properties": {
+        "reference": {
+          "$ref": "#/$defs/Value_str_"
+        },
+        "openparldata_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Openparldata Id"
+        }
+      },
+      "required": [
+        "reference"
+      ],
+      "title": "RelatedAffair",
+      "type": "object"
+    },
+    "Source": {
+      "properties": {
+        "openparldata_id": {
+          "title": "Openparldata Id",
+          "type": "string"
+        },
+        "parliament": {
+          "title": "Parliament",
+          "type": "string"
+        },
+        "level": {
+          "$ref": "#/$defs/Level"
+        },
+        "language": {
+          "$ref": "#/$defs/Language"
+        },
+        "document_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Document Url"
+        },
+        "pdf_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pdf Sha256"
+        },
+        "is_scanned": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Is Scanned"
+        }
+      },
+      "required": [
+        "openparldata_id",
+        "parliament",
+        "level",
+        "language"
+      ],
+      "title": "Source",
+      "type": "object"
+    },
+    "Value_ActorRole_": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActorRole"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "enum": [
+            "extracted",
+            "from_metadata",
+            "inferred",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "title": "Provenance",
+          "type": "array"
+        },
+        "review_flag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Flag"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Value[ActorRole]",
+      "type": "object"
+    },
+    "Value_AffairType_": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AffairType"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "enum": [
+            "extracted",
+            "from_metadata",
+            "inferred",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "title": "Provenance",
+          "type": "array"
+        },
+        "review_flag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Flag"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Value[AffairType]",
+      "type": "object"
+    },
+    "Value_DecisionOutcome_": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DecisionOutcome"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "enum": [
+            "extracted",
+            "from_metadata",
+            "inferred",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "title": "Provenance",
+          "type": "array"
+        },
+        "review_flag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Flag"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Value[DecisionOutcome]",
+      "type": "object"
+    },
+    "Value_ProceduralState_": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ProceduralState"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status": {
+          "enum": [
+            "extracted",
+            "from_metadata",
+            "inferred",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "title": "Provenance",
+          "type": "array"
+        },
+        "review_flag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Flag"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Value[ProceduralState]",
+      "type": "object"
+    },
+    "Value_date_": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "status": {
+          "enum": [
+            "extracted",
+            "from_metadata",
+            "inferred",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "title": "Provenance",
+          "type": "array"
+        },
+        "review_flag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Flag"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Value[date]",
+      "type": "object"
+    },
+    "Value_str_": {
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "status": {
+          "enum": [
+            "extracted",
+            "from_metadata",
+            "inferred",
+            "not_found"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "provenance": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Provenance"
+          },
+          "title": "Provenance",
+          "type": "array"
+        },
+        "review_flag": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Review Flag"
+        }
+      },
+      "required": [
+        "status"
+      ],
+      "title": "Value[str]",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "schema_version": {
+      "default": "0.1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source": {
+      "$ref": "#/$defs/Source"
+    },
+    "affair_type": {
+      "$ref": "#/$defs/Value_AffairType_"
+    },
+    "original_type_label": {
+      "$ref": "#/$defs/Value_str_"
+    },
+    "reference_number": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Value_str_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "title": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Value_str_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "actors": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Actor"
+      },
+      "title": "Actors",
+      "type": "array"
+    },
+    "addressed_body": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Value_str_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "affair_text": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Value_str_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "justification": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Value_str_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "questions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Question"
+      },
+      "title": "Questions",
+      "type": "array"
+    },
+    "answers": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Answer"
+      },
+      "title": "Answers",
+      "type": "array"
+    },
+    "executive_reasoning": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Value_str_"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "decision": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Decision"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "procedural_history": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ProceduralEvent"
+      },
+      "title": "Procedural History",
+      "type": "array"
+    },
+    "related_affairs": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/RelatedAffair"
+      },
+      "title": "Related Affairs",
+      "type": "array"
+    },
+    "annexes": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Reference"
+      },
+      "title": "Annexes",
+      "type": "array"
+    },
+    "tables": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Reference"
+      },
+      "title": "Tables",
+      "type": "array"
+    },
+    "images": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Reference"
+      },
+      "title": "Images",
+      "type": "array"
+    },
+    "review_flags": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Review Flags",
+      "type": "array"
+    }
+  },
+  "required": [
+    "source",
+    "affair_type",
+    "original_type_label"
+  ],
+  "title": "Affair",
+  "type": "object"
+}
