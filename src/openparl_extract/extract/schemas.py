@@ -32,6 +32,7 @@ class ExtractionResult(BaseModel):
     executive_reasoning: ExtractedItem | None = None
     decision: ExtractedDecision | None = None
     prompt_versions: dict[str, str] = {}
+    errors: list[str] = []  # runner problems (client/payload errors), copied into review flags by verify
 
 
 FIELD_GROUPS = ("affair_text", "justification", "questions", "answers", "executive_reasoning", "decision")

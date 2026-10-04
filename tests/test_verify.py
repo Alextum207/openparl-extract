@@ -219,3 +219,8 @@ def test_happy_path_and_flags_collected():
 def test_empty_result_never_raises():
     r = verify(ExtractionResult(), [])
     assert r.review_flags == [] and r.questions == [] and r.affair_text.status == "not_found"
+
+
+def test_verify_copies_extract_errors_into_review_flags():
+    r = ExtractionResult(errors=["client_error:questions:TimeoutError"])
+    assert "extract_error:client_error:questions:TimeoutError" in verify(r, BLOCKS).review_flags

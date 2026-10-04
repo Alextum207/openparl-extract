@@ -221,5 +221,6 @@ def verify(result: ExtractionResult, blocks: list[Block], threshold: int = 90) -
     flags += f
     decision, f = _verify_decision(result.decision, by_id, threshold)
     flags += f
+    flags += [f"extract_error:{e}" for e in result.errors]
     return VerifiedParts(**singles, questions=questions, answers=answers, decision=decision,
                          review_flags=list(dict.fromkeys(flags)), prompt_versions=result.prompt_versions)
