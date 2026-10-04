@@ -104,9 +104,19 @@ Every task follows TDD: write failing test, run to see it fail, minimal code, ru
 ### Task 9: CLI and end-to-end with mock
 - Create: `cli.py` (typer): `ingest`, `parse`, `segment`, `extract`, `verify`, `merge`, `evaluate`, `run-all`. Test: `run-all` on one fixture PDF with the mock produces a valid `Affair` JSON validated against the exported schema.
 
-### Task 10: Corpus, gold prefill, review page
-- Create: `scripts/pick_corpus.py` (stratified ~45 candidates by body level × language × scanned × type using API fields; plain-text availability noted), `review/build_review.py` (HTML: PDF page image next to JSON, quotes highlighted, correct/incorrect marking exported to `data/gold/*.json`).
-- Test: build_review produces HTML containing every quote of a fixture affair.
+### Task 10: Corpus, gold prefill
+- Create: `scripts/pick_corpus.py` (stratified ~45 candidates by body level × language × scanned × type using API fields; plain-text availability noted), `evaluate/gold_prefill.py` (turns pipeline output into a gold-draft JSON per document plus a list of review questions, see Task 10b).
+- Test: prefill of a fixture affair yields one question per extracted field, each with its quote and block id.
+
+### Task 10b: Gold-review web app (added by user request, built LAST, before Task 11)
+Goal: the human reviewer never fills a JSON file. A local web page asks many SMALL questions, one at a time, and every answer is a click or a few words.
+- Create: `review/app.py` (stdlib `http.server`, no new dependency; started with `openparl-extract review`; opens the browser), `review/questions.py` (builds the question list from a gold draft), `review/static/index.html` (single page, vanilla JS, large buttons, keyboard shortcuts), `review/render.py` (PDF page to PNG with pypdfium2, which Docling already installs).
+- One question = one field of one document. Screen: left the PDF page image with the cited block highlighted (and the page can be flipped); right the question in plain language ("Ist das die Frage des Vorstosses?"), the extracted text with its quote, and the buttons: **Richtig** / **Falsch** / **Steht nicht im Dokument** / **Unsicher (später)**. On **Falsch**: choose the right text by clicking another highlighted block on the page (no typing), or type a short text; for vocabulary fields (affair type, decision outcome, procedural state, actor role) show the allowed values as buttons instead of free text; for dates show a date picker.
+- Question order per document: affair type, submitter(s), addressed body, each question (text), each answer (is it the answer to this question? yes/no), decision outcome, decision date. Documents come in the order of the stratification so the gold set stays balanced; progress bar "12 of 140 questions, document 3 of 30"; undo last answer; resume where you left off; two reviewers can work on different language subsets (reviewer name stored per answer).
+- Answers are written immediately to `data/gold/<doc>.json` (autosave) with the reviewer, timestamp, verdict and corrected value+block id; never overwrite pipeline output, keep both.
+- A "Fertig" summary shows counts of right/wrong/not-in-document and the documents still open. Evaluate (Task 8) reads only reviewed fields from the gold file.
+- Tests: question builder produces the expected question sequence for a fixture draft; answer endpoint stores a verdict and survives a restart; corrected value for a vocabulary field is rejected if not in the vocabulary; page render returns a PNG; one end-to-end test posting answers through the HTTP handler.
+- A short German reviewer guide `docs/gold_review_anleitung.md` (what a gold set is, what to click, how long it takes, examples of right/wrong).
 
 ### Task 11: Demo query, docs
 - Create: `evaluate/demo.py` (median days submission to executive answer for interpellations per canton, from metadata/events), `README.md`, `docs/schema_mapping.md`, `docs/technical_report.md` skeleton from the HackApertus template.
