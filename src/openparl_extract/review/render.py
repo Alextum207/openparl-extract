@@ -1,11 +1,16 @@
 """PDF page rendering (pypdfium2 + Pillow) and block lookup for the review UI."""
 import io
+import threading
 from functools import lru_cache
 from pathlib import Path
 
 import pypdfium2 as pdfium
 
 from openparl_extract.parse.blocks import ParsedDoc
+
+
+# ponytail: serialised rendering; pypdfium2 is not thread-safe. Per-document pools if throughput matters.
+_PDFIUM = threading.Lock()
 
 
 def _open(pdf_path: Path, page: int):
@@ -18,13 +23,14 @@ def _open(pdf_path: Path, page: int):
 
 @lru_cache(maxsize=32)
 def _render(path: str, mtime: int, page: int, scale: float) -> bytes:
-    pdf, p = _open(Path(path), page)
-    try:
-        buf = io.BytesIO()
-        p.render(scale=scale).to_pil().save(buf, format="PNG")
-        return buf.getvalue()
-    finally:
-        pdf.close()
+    with _PDFIUM:
+        pdf, p = _open(Path(path), page)
+        try:
+            buf = io.BytesIO()
+            p.render(scale=scale).to_pil().save(buf, format="PNG")
+            return buf.getvalue()
+        finally:
+            pdf.close()
 
 
 def render_page(pdf_path: Path, page: int, scale: float = 1.5) -> bytes:
@@ -35,11 +41,12 @@ def render_page(pdf_path: Path, page: int, scale: float = 1.5) -> bytes:
 
 def page_size(pdf_path: Path, page: int) -> tuple[float, float]:
     """(width, height) in PDF points."""
-    pdf, p = _open(Path(pdf_path), page)
-    try:
-        return p.get_size()
-    finally:
-        pdf.close()
+    with _PDFIUM:
+        pdf, p = _open(Path(pdf_path), page)
+        try:
+            return p.get_size()
+        finally:
+            pdf.close()
 
 
 def page_blocks(parsed: ParsedDoc, page: int) -> list[dict]:

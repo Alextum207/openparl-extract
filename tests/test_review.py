@@ -16,7 +16,7 @@ from openparl_extract.review.app import make_server
 from openparl_extract.review.i18n import LANGS, STRINGS, t
 from openparl_extract.review.questions import FIELD_ORDER, build_question
 from openparl_extract.review.render import page_blocks, page_size, render_page
-from openparl_extract.review.store import GoldStore
+from openparl_extract.review.store import GoldStore, ReviewError
 
 
 # ---------- fixtures ----------
@@ -93,6 +93,11 @@ def test_t_fallback():
     assert t("de", "progress.question", n=2, total=5) == "Frage 2 von 5"
 
 
+NONNULL_OPTS = [("btn.correct", "correct", False), ("btn.wrong", "wrong", False),
+                ("btn.not_in_document", "not_in_document", False), ("btn.unsure", "unsure", False)]
+NULL_OPTS = [("btn.no", "not_in_document", False), ("btn.yes", "wrong", True), ("btn.unsure", "unsure", False)]
+
+
 # ---------- questions ----------
 def test_question_builder():
     a = mk_affair("100")
@@ -100,7 +105,7 @@ def test_question_builder():
     parsed = mk_parsed()
     q = build_question(doc, ge("affair_text", "Der Regierungsrat wird beauftragt."), a, parsed, "it")
     assert (q.kind, q.block_id, q.page, q.page_count) == ("text", "p1_b0", 1, 2)
-    assert q.quote == "Der Regierungsrat wird beauftragt." and q.options == ["correct", "wrong", "not_in_document", "unsure"]
+    assert q.quote == "Der Regierungsrat wird beauftragt." and [(o.key, o.verdict, o.needs_gold) for o in q.options] == NONNULL_OPTS
     assert not q.needs_gold_on_wrong
     ans = build_question(doc, ge("answer:0", "Es sind 12 Stellen."), a, parsed, "en")
     assert ans.question_text == "Wie viele Stellen?" and ans.page == 2
@@ -111,7 +116,7 @@ def test_question_builder():
     assert voc.block_id == "p2_b1"
     dt = build_question(doc, ge("decision.date", None), a, parsed, "de")
     assert dt.kind == "presence" and dt.value_kind == "date" and dt.needs_gold_on_wrong
-    assert dt.options == ["no", "yes", "unsure"] and dt.block_id is None
+    assert [(o.key, o.verdict, o.needs_gold) for o in dt.options] == NULL_OPTS and dt.block_id is None
     assert build_question(doc, ge("decision.outcome", None), a, parsed, "de").vocab
     prompts = {build_question(doc, ge("affair_text", "x"), None, None, lg).prompt for lg in LANGS}
     assert len(prompts) == 3
@@ -375,6 +380,160 @@ def test_end_to_end(server, env):
     affairs = [mk_affair("100"), mk_affair("101", "it")]
     m = field_metrics(affairs, gdocs)["_all"]
     assert (m.tp, m.fp, m.fn, m.tn, m.n_reviewed) == (8, 0, 0, 10, 18) and not m.stale
+
+
+def raw(srv, method, path, body=None, headers=None):
+    c = http.client.HTTPConnection("127.0.0.1", srv.server_address[1], timeout=10)
+    c.putrequest(method, path, skip_host=True, skip_accept_encoding=True)
+    h = {"Host": f"127.0.0.1:{srv.server_address[1]}", **(headers or {})}
+    for k, v in h.items():
+        c.putheader(k, v)
+    data = body.encode() if isinstance(body, str) else body
+    if data is not None and "Content-Length" not in h:
+        c.putheader("Content-Length", str(len(data)))
+    c.endheaders(data)
+    r = c.getresponse()
+    out = r.read()
+    c.close()
+    return r.status, out
+
+
+ANS = {"doc": "ZH_100", "field": "affair_text", "verdict": "correct", "reviewer": "A"}
+JSONH = {"Content-Type": "application/json"}
+
+
+def test_host_origin_content_type(server):
+    srv, _ = server
+    port = srv.server_address[1]
+    assert raw(srv, "GET", "/api/progress", headers={"Host": "evil.example:80"})[0] == 403
+    assert raw(srv, "GET", "/api/progress", headers={"Host": "attacker.com"})[0] == 403
+    assert raw(srv, "GET", "/api/progress", headers={"Host": f"localhost:{port}"})[0] == 200
+    body = json.dumps(ANS)
+    assert raw(srv, "POST", "/api/answer", body, {"Content-Type": "text/plain"})[0] in (400, 415)
+    assert raw(srv, "POST", "/api/answer", body)[0] in (400, 415)
+    assert raw(srv, "POST", "/api/answer", body, {**JSONH, "Origin": "http://evil.example"})[0] == 403
+    assert raw(srv, "POST", "/api/answer", body, {**JSONH, "Origin": f"http://127.0.0.1:{port}"})[0] == 200
+    assert raw(srv, "POST", "/api/answer", body, {"Content-Type": "application/json; charset=utf-8"})[0] == 200
+
+
+def test_bad_content_length(server):
+    srv, _ = server
+    assert raw(srv, "POST", "/api/answer", "{}", {**JSONH, "Content-Length": "-5"})[0] == 400
+
+
+@pytest.mark.parametrize("extra", [{"gold_value": {"a": 1}}, {"note": [1]}, {"gold_block_id": 5},
+                                   {"note": "x" * 501}, {"gold_value": "x" * 5001}, {"reviewer": 7},
+                                   {"verdict": ["correct"]}])
+def test_non_string_fields_rejected(server, env, extra):
+    srv, _ = server
+    _, gold = env
+    s, _, e = call(srv, "POST", "/api/answer", {**ANS, "verdict": "wrong", **extra})
+    assert s == 400 and "error" in e
+    assert len(load_gold(gold)) == 2
+    assert call(srv, "GET", "/api/question?doc=ZH_100&field=affair_text")[0] == 200
+
+
+def test_static_drive_letter(server):
+    srv, _ = server
+    for p in ("/static/D:x", "/static/C:index.html", "/static/..%2f"):
+        assert call(srv, "GET", p)[0] == 404, p
+
+
+def test_undo_conflict_and_vanished(env):
+    data, gold = env
+    s = GoldStore(gold, data)
+    s.apply_answer("ZH_100", "affair_text", "correct", "A")
+    s.apply_answer("ZH_100", "affair_text", "wrong", "B")
+    with pytest.raises(ReviewError) as ei:
+        s.undo("A")
+    assert ei.value.key == "err.undo_conflict"
+    assert s.get("ZH_100").entries[0].verdict == "wrong" and s.get("ZH_100").entries[0].reviewer == "B"
+    assert len((gold / ".review_log.jsonl").read_text(encoding="utf-8").splitlines()) == 2
+    assert s.undo("B").verdict == "correct"  # B's own undo still works
+    s.apply_answer("ZH_100", "question:q1", "correct", "C")
+    d = s.get("ZH_100")
+    d.entries = [e for e in d.entries if e.field != "question:q1"]
+    (gold / "ZH_100.json").write_text(d.model_dump_json(), encoding="utf-8")
+    with pytest.raises(ReviewError):
+        s.undo("C")
+
+
+def test_undo_conflict_http(server):
+    srv, _ = server
+    call(srv, "POST", "/api/answer", ANS)
+    call(srv, "POST", "/api/answer", {**ANS, "reviewer": "B", "verdict": "unsure"})
+    s, _, e = call(srv, "POST", "/api/undo", {"reviewer": "A", "lang": "it"})
+    assert s == 409 and e["error"] == STRINGS["it"]["err.undo_conflict"]
+
+
+def test_concurrent_render_and_blocks(server):
+    srv, _ = server
+    errs = []
+
+    def work(i):
+        for j in range(5):
+            if (i + j) % 2:
+                p = "/api/page?doc=ZH_100&page=%d&scale=1" % (1 + j % 2)
+            else:
+                p = "/api/blocks?doc=ZH_100&page=1"
+            st = call(srv, "GET", p)[0]
+            if st != 200:
+                errs.append(st)
+
+    th = [threading.Thread(target=work, args=(i,)) for i in range(8)]
+    [x.start() for x in th]
+    [x.join() for x in th]
+    assert not errs
+
+
+def test_correct_on_null_rejected(env):
+    data, gold = env
+    s = GoldStore(gold, data)
+    with pytest.raises(ReviewError) as ei:
+        s.apply_answer("ZH_100", "decision.date", "correct", "A")
+    assert ei.value.key == "err.invalid_verdict"
+
+
+def test_correct_on_null_http(server):
+    srv, _ = server
+    s, _, e = call(srv, "POST", "/api/answer", {**ANS, "field": "decision.date", "lang": "de"})
+    assert s == 400 and e["error"] == STRINGS["de"]["err.invalid_verdict"]
+
+
+def test_unknown_block(server):
+    srv, _ = server
+    s, _, e = call(srv, "POST", "/api/answer", {**ANS, "verdict": "wrong", "gold_block_id": "p9_b9", "lang": "en"})
+    assert s == 400 and e["error"] == STRINGS["en"]["err.unknown_block"]
+    assert call(srv, "POST", "/api/answer", {**ANS, "verdict": "wrong", "gold_block_id": "p1_b0"})[0] == 200
+
+
+def test_unknown_block_skipped_without_parsed(server, env):
+    srv, _ = server
+    data, _ = env
+    (data / "parsed" / "ZH" / "101" / "parsed.json").unlink()
+    assert call(srv, "POST", "/api/answer", {**ANS, "doc": "ZH_101", "verdict": "wrong",
+                                             "gold_block_id": "whatever"})[0] == 200
+
+
+def test_clean_reviewer():
+    from openparl_extract.review.app import ApiError, clean_reviewer
+    assert clean_reviewer("  Anna‮​ ") == "Anna"
+    assert clean_reviewer("Bo⁦b") == "Bob"
+    for bad in ("‮​", "   ", None):
+        with pytest.raises(ApiError):
+            clean_reviewer(bad)
+
+
+def test_i18n_plural_keys_and_wording():
+    for lg in LANGS:
+        assert "{n}" in STRINGS[lg]["summary.unsure_many"] and "{n}" not in STRINGS[lg]["summary.unsure_one"]
+        assert STRINGS[lg]["err.undo_conflict"] and STRINGS[lg]["err.unknown_block"]
+    assert STRINGS["de"]["lang.it"] == "Italienisch"
+
+
+def test_cli_registered_before_main_guard():
+    src = (Path(__file__).parent.parent / "src/openparl_extract/cli.py").read_text(encoding="utf-8")
+    assert src.index("def review(") < src.index('if __name__ == "__main__"')
 
 
 def test_cli_review_needs_gold(tmp_path):

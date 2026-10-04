@@ -196,8 +196,6 @@ def export_schema_cmd(out: Path = typer.Option(Path("schema/affair.v0.1.json"), 
     typer.echo(f"schema written: {out}")
 
 
-if __name__ == "__main__":
-    app()
 
 
 @app.command()
@@ -219,3 +217,7 @@ def review(data_dir: Path = DATA,
             webbrowser.open(url + f"/?lang={lang}")
 
     serve(data_dir, gold_dir, port, lang, on_ready=ready)
+
+
+if __name__ == "__main__":
+    app()

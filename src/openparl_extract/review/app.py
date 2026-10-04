@@ -3,6 +3,7 @@ import json
 import mimetypes
 import re
 import sys
+import unicodedata
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlparse
@@ -28,7 +29,9 @@ class ApiError(Exception):
 
 
 def clean_reviewer(name) -> str:
-    s = re.sub(r"[\x00-\x1f\x7f]", "", str(name or "")).strip()[:40]
+    if not isinstance(name, str):
+        raise ApiError(400, "err.bad_reviewer")
+    s = "".join(c for c in name if unicodedata.category(c) not in ("Cc", "Cf")).strip()[:40]
     if not s:
         raise ApiError(400, "err.bad_reviewer")
     return s
@@ -95,10 +98,17 @@ class Handler(BaseHTTPRequestHandler):
         u = urlparse(self.path)
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         body: dict = {}
+        port = self.server.server_address[1]
+        # DNS-rebinding / CSRF guard: only our own origin may talk to us
+        if self.headers.get("Host") not in (f"127.0.0.1:{port}", f"localhost:{port}") or self.headers.get(
+                "Origin") not in (None, f"http://127.0.0.1:{port}", f"http://localhost:{port}"):
+            return self._json({"error": t(self.server.lang_default, "err.forbidden")}, 403)
         if method == "POST":
+            if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
+                return self._json({"error": t(self.server.lang_default, "err.bad_request")}, 415)
             try:
                 n = int(self.headers.get("Content-Length") or 0)
-                if n > MAX_BODY:
+                if not 0 <= n <= MAX_BODY:
                     raise ValueError
                 body = json.loads(self.rfile.read(n) or b"{}")
                 if not isinstance(body, dict):
@@ -111,7 +121,8 @@ class Handler(BaseHTTPRequestHandler):
         except ApiError as e:
             self._json({"error": t(lang, e.key)}, e.status)
         except ReviewError as e:
-            self._json({"error": t(lang, e.key)}, 404 if method == "GET" else 400)
+            self._json({"error": t(lang, e.key)},
+                       409 if e.key == "err.undo_conflict" else 404 if method == "GET" else 400)
         except Exception as e:  # never leak a traceback to the client
             print(f"review app: {type(e).__name__}: {e}", file=sys.stderr)
             self._json({"error": t(lang, "err.server")}, 500)
@@ -144,6 +155,10 @@ class Handler(BaseHTTPRequestHandler):
                 st.get(body["doc"])
             except ReviewError:  # unknown doc is a client error on POST
                 raise ApiError(400, "err.unknown_doc") from None
+            gid = body.get("gold_block_id")
+            parsed = self.server.res.parsed(st.get(body["doc"]))
+            if isinstance(gid, str) and parsed is not None and gid not in {b.id for b in parsed.blocks}:
+                raise ApiError(400, "err.unknown_block")
             e = st.apply_answer(body["doc"], body["field"], body["verdict"], clean_reviewer(body.get("reviewer")),
                                 body.get("gold_value"), body.get("gold_block_id"), body.get("note"))
             return self._json(e.model_dump())
@@ -158,7 +173,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def _static(self, name: str) -> None:
         f = STATIC / name
-        if not name or "/" in name or "\\" in name or name.startswith(".") or not f.is_file():
+        if (not name or any(c in name for c in "/\\:") or name.startswith(".")
+                or f.resolve().parent != STATIC.resolve() or not f.is_file()):
             raise ApiError(404, "err.not_found")
         ctype = mimetypes.guess_type(name)[0] or "application/octet-stream"
         self._send(200, f.read_bytes(), ctype + ("; charset=utf-8" if ctype.startswith("text/") else ""))

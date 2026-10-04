@@ -15,6 +15,7 @@ from openparl_extract.review.i18n import t
 from openparl_extract.review.questions import field_rank
 
 LOG_NAME = ".review_log.jsonl"
+MAX_NOTE, MAX_GOLD = 500, 5000
 VERDICTS = ("correct", "wrong", "not_in_document", "unsure")
 _ISO = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -85,8 +86,13 @@ class GoldStore:
 
     def apply_answer(self, doc_key: str, field: str, verdict: str, reviewer: str, gold_value: str | None = None,
                      gold_block_id: str | None = None, note: str | None = None) -> GoldEntry:
+        if not all(isinstance(x, str) for x in (doc_key, field, reviewer)) or not all(
+                x is None or isinstance(x, str) for x in (gold_value, gold_block_id, note)):
+            raise ReviewError("err.bad_request")
         if verdict not in VERDICTS:
             raise ReviewError("err.invalid_verdict")
+        if len(note or "") > MAX_NOTE or len(gold_value or "") > MAX_GOLD or len(gold_block_id or "") > 100:
+            raise ReviewError("err.too_long")
         with self._lock:
             doc = self.get(doc_key)
             entry = next((e for e in doc.entries if e.field == field), None)
@@ -102,6 +108,8 @@ class GoldStore:
                         raise ReviewError("err.bad_date") from None
                     if not _ISO.match(gold_value):
                         raise ReviewError("err.bad_date")
+            if entry.pipeline_value is None and verdict == "correct":  # nothing to confirm
+                raise ReviewError("err.invalid_verdict")
             if entry.pipeline_value is None and verdict == "wrong" and not (gold_value or gold_block_id):
                 raise ReviewError("err.gold_required")
             before = entry.model_dump()
@@ -109,6 +117,7 @@ class GoldStore:
             entry.gold_value = gold_value if verdict == "wrong" else None
             entry.gold_block_id = gold_block_id if verdict == "wrong" else None
             entry.note = note
+            GoldEntry.model_validate(entry.model_dump())  # assignments are not validated by pydantic
             self._write(doc_key, doc)
             self._log(reviewer, doc_key, field, "answer", before, entry.model_dump())
             return entry
@@ -130,9 +139,14 @@ class GoldStore:
             if not stack:
                 return None
             r = stack[-1]
-            doc = self.get(r["doc_key"])
-            i = next(i for i, e in enumerate(doc.entries) if e.field == r["field"])
+            try:
+                doc = self.get(r["doc_key"])
+                i = next(i for i, e in enumerate(doc.entries) if e.field == r["field"])
+            except (ReviewError, StopIteration):
+                raise ReviewError("err.undo_conflict") from None
             current = doc.entries[i].model_dump()
+            if current != r["after"]:  # someone answered this field after us: do not wipe their answer
+                raise ReviewError("err.undo_conflict")
             doc.entries[i] = GoldEntry.model_validate(r["before"])
             self._write(r["doc_key"], doc)
             self._log(reviewer, r["doc_key"], r["field"], "undo", current, r["before"])

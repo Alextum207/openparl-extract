@@ -22,6 +22,20 @@ def prompt_key(field: str) -> str:
     return field.split(":")[0] if ":" in field else field
 
 
+class Option(BaseModel):
+    key: str  # i18n button key
+    verdict: str  # verdict sent to /api/answer
+    needs_gold: bool = False  # reviewer must also give gold_value or gold_block_id
+
+
+NONNULL_OPTIONS = [Option(key="btn.correct", verdict="correct"), Option(key="btn.wrong", verdict="wrong"),
+                   Option(key="btn.not_in_document", verdict="not_in_document"),
+                   Option(key="btn.unsure", verdict="unsure")]
+NULL_OPTIONS = [Option(key="btn.no", verdict="not_in_document"),
+                Option(key="btn.yes", verdict="wrong", needs_gold=True),
+                Option(key="btn.unsure", verdict="unsure")]
+
+
 class Question(BaseModel):
     doc_key: str
     field: str
@@ -36,7 +50,7 @@ class Question(BaseModel):
     question_text: str | None = None
     vocab: list[str] | None = None
     allow_free_text: bool
-    options: list[str]
+    options: list[Option]
     needs_gold_on_wrong: bool
 
 
@@ -68,14 +82,10 @@ def build_question(doc: GoldDoc, entry: GoldEntry, affair: Affair | None, parsed
     v, qt = _value_of(affair, f)
     prov = v.provenance[0] if v is not None and v.provenance and not null else None
     pk = prompt_key(f)
-    if null:
-        options = ["no", "yes", "unsure"]
-    else:
-        options = ["correct", "wrong", "not_in_document", "unsure"]
     return Question(
         doc_key=doc_key or f"{doc.body_key}_{doc.affair_id}", field=f, kind=kind, value_kind=value_kind,
         prompt=t(lang, ("p." if null else "q.") + pk), pipeline_value=entry.pipeline_value,
         quote=prov.quote if prov else None, block_id=prov.block_id if prov else None,
         page=prov.page if prov else None, page_count=parsed.page_count if parsed else None,
         question_text=qt, vocab=[o.value for o in DecisionOutcome] if value_kind == "vocab" else None,
-        allow_free_text=value_kind != "vocab", options=options, needs_gold_on_wrong=null)
+        allow_free_text=value_kind != "vocab", options=NULL_OPTIONS if null else NONNULL_OPTIONS, needs_gold_on_wrong=null)
