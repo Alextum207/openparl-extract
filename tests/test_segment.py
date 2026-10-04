@@ -1,0 +1,147 @@
+from openparl_extract.parse.blocks import Block
+from openparl_extract.segment.rules import SECTIONS, SegmentResult, section_blocks, segment
+
+
+def mk(*items):
+    """items: (text, type) or text -> Blocks with ids p1_b0..."""
+    out = []
+    for i, it in enumerate(items):
+        text, typ = (it, "paragraph") if isinstance(it, str) else it
+        out.append(Block(id=f"p1_b{i}", page=1, text=text, type=typ))
+    return out
+
+
+def sec(r, name):
+    return r.sections[name]
+
+
+def test_german():
+    b = mk(("Interpellation", "heading"), "Der Regierungsrat wird gebeten...",
+           ("Begründung", "heading"), "Weil ...",
+           ("Fragen", "heading"), "1. Wie viele?",
+           ("Antwort des Regierungsrates", "heading"), "Der Regierungsrat antwortet.",
+           ("Beschluss", "heading"), "Der Grosse Rat nimmt Kenntnis.",
+           ("Anhang", "heading"), "Tabelle")
+    r = segment(b)
+    assert sec(r, "affair_text") == ["p1_b0", "p1_b1"]
+    assert sec(r, "justification") == ["p1_b2", "p1_b3"]
+    assert sec(r, "questions") == ["p1_b4", "p1_b5"]
+    assert sec(r, "executive_answer") == ["p1_b6", "p1_b7"]
+    assert sec(r, "decision") == ["p1_b8", "p1_b9"]
+    assert sec(r, "annex") == ["p1_b10", "p1_b11"]
+    assert r.review_flags == []
+    assert r.block_section["p1_b7"] == "executive_answer"
+    assert ("p1_b6", "executive_answer") in r.headings
+
+
+def test_french():
+    b = mk(("Interpellation", "heading"), "texte", ("Développement", "heading"), "x",
+           ("Questions", "heading"), "q", ("Réponse du Conseil d'Etat", "heading"), "r",
+           ("Annexes", "heading"), "a")
+    r = segment(b)
+    assert [len(sec(r, s)) for s in ("affair_text", "justification", "questions", "executive_answer", "annex")] == [2] * 5
+
+
+def test_italian():
+    b = mk(("Interrogazione", "heading"), "testo", ("Motivazione", "heading"), "x",
+           ("Domande", "heading"), "q", ("Risposta del Consiglio di Stato", "heading"), "r",
+           ("Allegato", "heading"), "a", ("Decisione", "heading"), "d")
+    r = segment(b)
+    assert [len(sec(r, s)) for s in ("affair_text", "justification", "questions", "executive_answer", "annex", "decision")] == [2] * 6
+
+
+def test_uppercase_accents_apostrophes_numbering():
+    for t in ("ANTWORT DES REGIERUNGSRATES", "Reponse du Conseil d'Etat", "Réponse du Conseil d’Etat",
+              "Réponse du Conseil d´État", "RÉPONSE DU CONSEIL D'ÉTAT", "2. Antwort des Regierungsrates:",
+              "II. Antwort des Bundesrates", "A) Risposta del Consiglio di Stato", "2.1 Antwort"):
+        r = segment(mk("vorher", (t, "heading"), "body"))
+        assert sec(r, "executive_answer") == ["p1_b1", "p1_b2"], t
+
+
+def test_long_paragraph_does_not_open():
+    long = "Wir bedanken uns. Die Antwort des Regierungsrates auf diese Frage lautet wie folgt, und zwar " * 3
+    r = segment(mk(("Begründung", "heading"), long, "mehr"))
+    assert sec(r, "executive_answer") == []
+    assert sec(r, "justification") == ["p1_b0", "p1_b1", "p1_b2"]
+
+
+def test_short_paragraph_heading_without_type():
+    r = segment(mk("text", "Antwort des Regierungsrates", "body"))
+    assert sec(r, "executive_answer") == ["p1_b1", "p1_b2"]
+
+
+def test_before_first_heading_is_affair_text():
+    r = segment(mk("a", "b", ("Fragen", "heading"), "c"))
+    assert sec(r, "affair_text") == ["p1_b0", "p1_b1"]
+    assert sec(r, "questions") == ["p1_b2", "p1_b3"]
+
+
+def test_annex_runs_until_next_heading():
+    r = segment(mk(("Anhang", "heading"), "x", "y", ("Beschluss", "heading"), "z"))
+    assert sec(r, "annex") == ["p1_b0", "p1_b1", "p1_b2"]
+    assert sec(r, "decision") == ["p1_b3", "p1_b4"]
+
+
+def test_two_answer_headings():
+    r = segment(mk(("Antwort des Regierungsrates", "heading"), "a", ("Fragen", "heading"), "q",
+                   ("Antwort des Regierungsrates", "heading"), "b"))
+    assert sec(r, "executive_answer") == ["p1_b0", "p1_b1", "p1_b4", "p1_b5"]
+    assert len(r.headings) == 3
+
+
+def test_no_heading_all_other():
+    r = segment(mk("alpha", "beta"))
+    assert sec(r, "other") == ["p1_b0", "p1_b1"]
+    assert "segmentation_failed" in r.review_flags
+    assert r.block_section == {"p1_b0": "other", "p1_b1": "other"}
+
+
+def test_empty_list():
+    r = segment([])
+    assert set(r.sections) == set(SECTIONS)
+    assert all(v == [] for v in r.sections.values())
+    assert isinstance(r, SegmentResult)
+
+
+def test_image_table_stay_in_section():
+    r = segment(mk(("Anhang", "heading"), ("t", "table"), ("", "image")))
+    assert sec(r, "annex") == ["p1_b0", "p1_b1", "p1_b2"]
+
+
+def test_section_blocks_helper():
+    b = mk(("Fragen", "heading"), "q1", ("Antwort", "heading"), "a")
+    r = segment(b)
+    assert [x.id for x in section_blocks(r, b, "questions")] == ["p1_b0", "p1_b1"]
+
+
+# --- fixtures built from real headings observed in OpenParlData PDFs (BE, ZH, FR, GE, TI) ---
+def test_real_be_form_antrag_regierungsrat_is_not_a_decision():
+    r = segment(mk(("Parlamentarischer Vorstoss", "heading"), "Vorstoss-Nr.:", "Antrag Regierungsrat:",
+                   ("Kinderrechte im Nothilferegime sicher schützen", "heading"), "Begründung:", "text"))
+    assert sec(r, "decision") == []
+    assert sec(r, "justification") == ["p1_b4", "p1_b5"]
+
+
+def test_real_zh_no_heading_questions_intro():
+    r = segment(mk("KR-Nr. 362/2026", "Betreffend Rechnungslegung", "Hintergrundtext",
+                   "Vor diesem Hintergrund ersuchen wir um Beantwortung folgender Fragen:", "Plant die GD ...?"))
+    assert sec(r, "questions") == ["p1_b3", "p1_b4"]
+    assert r.review_flags == []
+
+
+def test_real_fr_fribourg_and_geneve():
+    r = segment(mk(("Dépôt d'un instrument parlementaire", "heading"), "Postulat 2026-GC-246",
+                   ("Dépôt et développement", "heading"), "texte",
+                   ("EXPOSÉ DES MOTIFS", "heading"), "x", ("ANNEXE 1", "heading"), "y"))
+    assert sec(r, "affair_text") == ["p1_b0", "p1_b1", "p1_b2", "p1_b3"]
+    assert sec(r, "justification") == ["p1_b4", "p1_b5"]
+    assert sec(r, "annex") == ["p1_b6", "p1_b7"]
+
+
+def test_real_ti_interpellanza():
+    r = segment(mk(("INTERPELLANZA (art. 97 LGC)", "heading"), "Presentata da: X",
+                   ("Motivazione riguardo l'interesse pubblico e l'urgenza [cfr. art. 97 cpv. 3 LGC]", "heading"),
+                   ("Testo:", "heading"), "Rileviamo", "Si chiede quindi al Consiglio di Stato:", "domanda"))
+    assert sec(r, "justification") == ["p1_b2"]
+    assert sec(r, "affair_text") == ["p1_b0", "p1_b1", "p1_b3", "p1_b4"]
+    assert sec(r, "questions") == ["p1_b5", "p1_b6"]
