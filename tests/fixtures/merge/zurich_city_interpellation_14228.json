@@ -1,0 +1,400 @@
+{
+ "id": 14228,
+ "url_api": "https://api.openparldata.ch/v1/affairs/14228",
+ "body_key": "261",
+ "external_id": "5ed2212fde5049d8acb617bb8873b5ed",
+ "external_alternative_id": null,
+ "number": "2024/151",
+ "title": {
+  "de": "Umsetzung des Gegenvorschlags zur Volksinitiative «Keine goldenen Fallschirme an abtretende Behördenmitglieder», Wertung der Aussagen in der Abstimmungszeitung und Gründe für die Weglassung der weiteren Behördenentschädigungen sowie geplante Höhe der Abgangsentschädigungen für die übrigen Behördenmitglieder"
+ },
+ "body_id": 322,
+ "type_external_id": null,
+ "type_harmonized_id": 8,
+ "type_harmonized_wikidata_id": "Q1505023",
+ "state_external_id": null,
+ "state_name_harmonized_id": null,
+ "begin_date": "2024-04-03T00:00:00",
+ "end_date": null,
+ "active": null,
+ "updated_external_at": null,
+ "updated_at": "2026-05-24T08:23:55",
+ "created_at": "2025-08-14T07:44:48",
+ "title_long": {},
+ "type_name": {
+  "de": "Interpellation"
+ },
+ "type_harmonized": {
+  "de": "Interpellation",
+  "fr": "Interpellation",
+  "it": "interpellanza",
+  "rm": "interpellaziun",
+  "en": "Interpellation"
+ },
+ "state_name": {
+  "de": "Abgeschlossen"
+ },
+ "state_name_harmonized": {},
+ "url_external": {
+  "de": "https://www.gemeinderat-zuerich.ch/geschaefte/detail.php?gid=5ed2212fde5049d8acb617bb8873b5ed"
+ },
+ "contributors": {
+  "data": [
+   {
+    "id": 1419078,
+    "body_id": 322,
+    "body_key": "261",
+    "external_id": "5ed2212fde5049d8acb617bb8873b5ed_6a37d6abc96847aeb8e2e5295a2f6db7",
+    "affair_id": 14228,
+    "person_id": 2566,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "person",
+    "role_external_id": null,
+    "role_harmonized": {
+     "de": "Urheber/in",
+     "fr": "Auteur",
+     "it": "Autore",
+     "rm": "Autur",
+     "en": "Author"
+    },
+    "firstname": "Stefan",
+    "lastname": "Urech",
+    "fullname": "Stefan Urech",
+    "party_wikidata_id": "Q385258",
+    "position": 2,
+    "role": {
+     "de": "Mitunterzeichner"
+    },
+    "party": {
+     "de": "SVP"
+    },
+    "party_harmonized": {
+     "de": "Schweizerische Volkspartei",
+     "fr": "Union démocratique du centre",
+     "it": "Unione democratica di centro"
+    }
+   },
+   {
+    "id": 670134,
+    "body_id": 322,
+    "body_key": "261",
+    "external_id": "5ed2212fde5049d8acb617bb8873b5ed_a6692d9d783c46ddb7179a408e03a6b0",
+    "affair_id": 14228,
+    "person_id": 2703,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "person",
+    "role_external_id": null,
+    "role_harmonized": {
+     "de": "Urheber/in",
+     "fr": "Auteur",
+     "it": "Autore",
+     "rm": "Autur",
+     "en": "Author"
+    },
+    "firstname": "Samuel",
+    "lastname": "Balsiger",
+    "fullname": "Samuel Balsiger",
+    "party_wikidata_id": "Q385258",
+    "position": 1,
+    "role": {
+     "de": "Erstunterzeichnender"
+    },
+    "party": {
+     "de": "SVP"
+    },
+    "party_harmonized": {
+     "de": "Schweizerische Volkspartei",
+     "fr": "Union démocratique du centre",
+     "it": "Unione democratica di centro"
+    }
+   },
+   {
+    "id": 295225,
+    "body_id": 322,
+    "body_key": "261",
+    "external_id": "5ed2212fde5049d8acb617bb8873b5ed_fe6216b181dc4967a35d880ee23db3fc",
+    "affair_id": 14228,
+    "person_id": null,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "group",
+    "role_external_id": null,
+    "role_harmonized": {
+     "de": "Federführendes Departement",
+     "fr": "Département responsable",
+     "it": "Dipartimento responsabile",
+     "rm": "Departament responsabel",
+     "en": "Leading Department"
+    },
+    "firstname": null,
+    "lastname": "Finanzdepartement (FD)",
+    "fullname": "Finanzdepartement (FD)",
+    "party_wikidata_id": null,
+    "position": 1,
+    "role": {
+     "de": "Federführung",
+     "fr": "Responsabilité"
+    },
+    "party": {},
+    "party_harmonized": {}
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 3,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/14228?expand=contributors&contributors_offset=0&contributors_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/14228?expand=contributors&contributors_offset=0&contributors_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/14228?expand=contributors&contributors_offset=0&contributors_limit=100"
+  }
+ },
+ "docs": {
+  "data": [
+   {
+    "id": 334823,
+    "body_id": 322,
+    "body_key": "261",
+    "parent_type": "affair",
+    "external_id": "e11a5a4d02c648ef9529e5a188f59d5d",
+    "external_alternative_id": null,
+    "name": "2024_0151 Protokollauszug Beschluss",
+    "url": "https://www.gemeinderat-zuerich.ch/dokumente/e11a5a4d02c648ef9529e5a188f59d5d-332?filename=2024_0151ProtokollauszugBeschluss",
+    "url_oparl": "https://files.openparldata.ch/doc/261/b445e0d17235efa24af7ad7219129c840141aa873baa86c6916a0ccd5f920e7f",
+    "date": "2024-12-18T00:00:00",
+    "size": 52682,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "Auszug aus dem Beschlussprotokoll \n\n126. Sitzung des Gemeinderats vom 18. Dezember 2024 \n\n \n \n \n4120. 2024/151 \n\nInterpellation von Samuel Balsiger (SVP) und Stefan Urech (SVP) vom 03.04.2024: \nUmsetz",
+    "affair_id": 14228,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {
+     "de": "Dokument"
+    }
+   },
+   {
+    "id": 284064,
+    "body_id": 322,
+    "body_key": "261",
+    "parent_type": "affair",
+    "external_id": "50f9b5e393974d789b07eb54c9237017",
+    "external_alternative_id": null,
+    "name": "2024_0151 Interpellation",
+    "url": "https://www.gemeinderat-zuerich.ch/dokumente/50f9b5e393974d789b07eb54c9237017-332?filename=2024_0151Interpellation",
+    "url_oparl": "https://files.openparldata.ch/doc/261/ab78c993f65f5bc65417b5c79e73a698d895e046a03d83c94601a0e7fa239987",
+    "date": "2024-04-03T00:00:00",
+    "size": 878004,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "Stadt Zürich \nGemeinderat \n\nInterpellation \n\nGR Nr. 2024/ 151 \n\n3. April 2024 \n\nvon Samuel Balsiger SVP) \n• und Stefan Urech (SVP) \n\nAm 3. März 2024 kam die Volksinitiative der SVP «Keine goldene Fall",
+    "affair_id": 14228,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {
+     "de": "Dokument"
+    }
+   },
+   {
+    "id": 178907,
+    "body_id": 322,
+    "body_key": "261",
+    "parent_type": "affair",
+    "external_id": "aece35b44a26429fa76c80c7916a79e7",
+    "external_alternative_id": null,
+    "name": "2024_0151 Protokollauszug substanziell",
+    "url": "https://www.gemeinderat-zuerich.ch/dokumente/aece35b44a26429fa76c80c7916a79e7-332?filename=2024_0151Protokollauszugsubstanziell",
+    "url_oparl": "https://files.openparldata.ch/doc/261/0fadbf760c442f06d9b227568cbd95ba47738d0e2ef1acaa46e4a95953d7ce63",
+    "date": "2024-12-18T00:00:00",
+    "size": 155560,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "Auszug aus dem substanziellen Protokoll \n126. Ratssitzung vom 18. Dezember 2024\n \n \n \n4120. 2024/151 \n\nInterpellation von Samuel Balsiger (SVP) und Stefan Urech (SVP) vom 03.04.2024: \nUmsetzung des Ge",
+    "affair_id": 14228,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {
+     "de": "Dokument"
+    }
+   },
+   {
+    "id": 123748,
+    "body_id": 322,
+    "body_key": "261",
+    "parent_type": "affair",
+    "external_id": "911976dc14d64acab4cdb1caa8c72994",
+    "external_alternative_id": null,
+    "name": "2024_0151 Antwort Stadtrat",
+    "url": "https://www.gemeinderat-zuerich.ch/dokumente/911976dc14d64acab4cdb1caa8c72994-332?filename=2024_0151AntwortStadtrat",
+    "url_oparl": "https://files.openparldata.ch/doc/261/dcc50e6470d417caea11e0c34da8220b6e58514a52a73ced8ade9b5b7fda4b8d",
+    "date": "2024-07-10T00:00:00",
+    "size": 96983,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "2024-GR-ZH-213 \n\nBeschluss des Stadtrats  \n \n\nvom 10. Juli 2024 \n\n \n\nGR Nr. 2024/151 \n \n\nNr. 2181/2024 \n\nInterpellation von Samuel Balsiger und Stefan Urech betreffend Umsetzung \n\ndes Gegenvorschlags ",
+    "affair_id": 14228,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {
+     "de": "Dokument"
+    }
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 4,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/14228?expand=docs&docs_offset=0&docs_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/14228?expand=docs&docs_offset=0&docs_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/14228?expand=docs&docs_offset=0&docs_limit=100"
+  }
+ },
+ "events": {
+  "data": [
+   {
+    "id": 5283,
+    "body_id": 322,
+    "body_key": "261",
+    "external_id": null,
+    "date": "2024-04-03T00:00:00",
+    "position": 1,
+    "title_external_id": null,
+    "title_harmonized": {
+     "de": "Eingereicht",
+     "fr": "Déposé",
+     "it": "Presentato",
+     "en": "Submitted"
+    },
+    "title_harmonized_id": 1,
+    "title_harmonized_wikidata_id": null,
+    "last": false,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 14228,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": null,
+    "title": {
+     "de": "Eingereicht"
+    },
+    "actor": {}
+   },
+   {
+    "id": 5207,
+    "body_id": 322,
+    "body_key": "261",
+    "external_id": null,
+    "date": "2024-07-10T00:00:00",
+    "position": 2,
+    "title_external_id": null,
+    "title_harmonized": {
+     "de": "Beantwortet",
+     "fr": "Répondu",
+     "it": "Risposto",
+     "en": "Answered"
+    },
+    "title_harmonized_id": 6,
+    "title_harmonized_wikidata_id": null,
+    "last": false,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 14228,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": null,
+    "title": {
+     "de": "Stadtrat, Antwort"
+    },
+    "actor": {
+     "de": "Regierung"
+    }
+   },
+   {
+    "id": 5086,
+    "body_id": 322,
+    "body_key": "261",
+    "external_id": null,
+    "date": "2024-12-18T00:00:00",
+    "position": 3,
+    "title_external_id": null,
+    "title_harmonized": {
+     "de": "Behandelt vom Parlament",
+     "fr": "Traiter par le Parlement",
+     "it": "Trattato in Parlamento",
+     "en": "Dealt with by Parliament"
+    },
+    "title_harmonized_id": 8,
+    "title_harmonized_wikidata_id": null,
+    "last": true,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 14228,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": null,
+    "title": {
+     "de": "Diskussion"
+    },
+    "actor": {
+     "de": "Parlament"
+    }
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 3,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/14228?expand=events&events_offset=0&events_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/14228?expand=events&events_offset=0&events_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/14228?expand=events&events_offset=0&events_limit=100"
+  }
+ },
+ "links": {
+  "contributors": "https://api.openparldata.ch/v1/affairs/14228/contributors",
+  "docs": "https://api.openparldata.ch/v1/affairs/14228/docs",
+  "events": "https://api.openparldata.ch/v1/affairs/14228/events",
+  "texts": "https://api.openparldata.ch/v1/affairs/14228/texts",
+  "speeches": "https://api.openparldata.ch/v1/affairs/14228/speeches",
+  "votings": "https://api.openparldata.ch/v1/affairs/14228/votings",
+  "agendas": "https://api.openparldata.ch/v1/affairs/14228/agendas",
+  "meetings": "https://api.openparldata.ch/v1/affairs/14228/meetings",
+  "bodies": "https://api.openparldata.ch/v1/affairs/14228/bodies",
+  "external_links": "https://api.openparldata.ch/v1/affairs/14228/external_links"
+ }
+}

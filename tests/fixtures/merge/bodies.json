@@ -1,0 +1,86 @@
+{
+ "4551": {
+  "id": 1475,
+  "body_key": "4551",
+  "name": {
+   "de": "Aadorf",
+   "en": "Aadorf",
+   "fr": "Aadorf",
+   "it": "Aadorf"
+  },
+  "type": "municipality",
+  "canton_key": "TG",
+  "country_key": "CHE",
+  "lang": "DE"
+ },
+ "LIE": {
+  "id": 130,
+  "body_key": "LIE",
+  "name": {
+   "de": "Liechtenstein",
+   "en": "Liechtenstein",
+   "fr": "Liechtenstein",
+   "it": "Liechtenstein"
+  },
+  "type": "country",
+  "canton_key": null,
+  "country_key": "LIE",
+  "lang": null
+ },
+ "CHE": {
+  "id": 42,
+  "body_key": "CHE",
+  "name": {
+   "de": "Schweiz",
+   "en": "Switzerland",
+   "fr": "Suisse",
+   "it": "Svizzera"
+  },
+  "type": "country",
+  "canton_key": null,
+  "country_key": "CHE",
+  "lang": null
+ },
+ "TI": {
+  "id": 270,
+  "body_key": "TI",
+  "name": {
+   "de": "Tessin",
+   "en": "Ticino",
+   "fr": "Tessin",
+   "it": "Ticino"
+  },
+  "type": "canton",
+  "canton_key": "TI",
+  "country_key": "CHE",
+  "lang": "IT"
+ },
+ "261": {
+  "id": 322,
+  "body_key": "261",
+  "name": {
+   "de": "Zürich",
+   "en": "Zürich",
+   "fr": "Zürich",
+   "it": "Zürich"
+  },
+  "type": "city",
+  "canton_key": "ZH",
+  "country_key": "CHE",
+  "lang": "DE"
+ },
+ "ZH": {
+  "id": 275,
+  "body_key": "ZH",
+  "name": {
+   "de": "Zürich",
+   "en": "Zürich",
+   "fr": "Zürich",
+   "it": "Zurigo"
+  },
+  "type": "canton",
+  "canton_key": "ZH",
+  "country_key": "CHE",
+  "lang": "DE"
+ }
+}

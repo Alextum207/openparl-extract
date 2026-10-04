@@ -1,0 +1,461 @@
+{
+ "id": 219288,
+ "url_api": "https://api.openparldata.ch/v1/affairs/219288",
+ "body_key": "ZH",
+ "external_id": "7aa78bd2b3c34bb696e7bddede633e43",
+ "external_alternative_id": null,
+ "number": "104/2025",
+ "title": {
+  "de": "Ein eigener Hochschulrat für die Pädagogische Hochschule Zürich"
+ },
+ "body_id": 275,
+ "type_external_id": null,
+ "type_harmonized_id": 2,
+ "type_harmonized_wikidata_id": "Q1949668",
+ "state_external_id": null,
+ "state_name_harmonized_id": null,
+ "begin_date": "2025-03-31T00:00:00",
+ "end_date": "2025-03-31T00:00:00",
+ "active": null,
+ "updated_external_at": null,
+ "updated_at": "2026-10-04T02:19:52",
+ "created_at": "2025-08-14T07:44:48",
+ "title_long": {},
+ "type_name": {
+  "de": "Motion"
+ },
+ "type_harmonized": {
+  "de": "Motion",
+  "fr": "Motion",
+  "it": "Mozione",
+  "rm": "Moziun",
+  "en": "Motion"
+ },
+ "state_name": {
+  "de": "Erledigt"
+ },
+ "state_name_harmonized": {},
+ "url_external": {
+  "de": "https://www.kantonsrat.zh.ch/geschaefte/geschaeft/?id=7aa78bd2b3c34bb696e7bddede633e43"
+ },
+ "contributors": {
+  "data": [
+   {
+    "id": 1085438,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": "7aa78bd2b3c34bb696e7bddede633e43_5a90ae2d3b9a42c3b22e437087fcbb30",
+    "affair_id": 219288,
+    "person_id": 17617,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "group",
+    "role_external_id": null,
+    "role_harmonized": {
+     "de": "Federführendes Departement",
+     "fr": "Département responsable",
+     "it": "Dipartimento responsabile",
+     "rm": "Departament responsabel",
+     "en": "Leading Department"
+    },
+    "firstname": null,
+    "lastname": "Bildungsdirektion",
+    "fullname": "Bildungsdirektion",
+    "party_wikidata_id": null,
+    "position": 1,
+    "role": {
+     "de": "Direktion",
+     "fr": "Direction"
+    },
+    "party": {},
+    "party_harmonized": {}
+   },
+   {
+    "id": 787958,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": "7aa78bd2b3c34bb696e7bddede633e43_3",
+    "affair_id": 219288,
+    "person_id": 17617,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "person",
+    "role_external_id": null,
+    "role_harmonized": {
+     "de": "Urheber/in",
+     "fr": "Auteur",
+     "it": "Autore",
+     "rm": "Autur",
+     "en": "Author"
+    },
+    "firstname": "Monika",
+    "lastname": "Wicki",
+    "fullname": "Monika Wicki",
+    "party_wikidata_id": "Q303745",
+    "position": 3,
+    "role": {
+     "de": "Mitunterzeichnerin / Mitunterzeichner"
+    },
+    "party": {
+     "de": "SP"
+    },
+    "party_harmonized": {
+     "de": "Sozialdemokratische Partei",
+     "fr": "Parti Socialiste",
+     "it": "Partito Socialista"
+    }
+   },
+   {
+    "id": 787957,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": "7aa78bd2b3c34bb696e7bddede633e43_2",
+    "affair_id": 219288,
+    "person_id": 17762,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "person",
+    "role_external_id": null,
+    "role_harmonized": {
+     "de": "Urheber/in",
+     "fr": "Auteur",
+     "it": "Autore",
+     "rm": "Autur",
+     "en": "Author"
+    },
+    "firstname": "Sibylle",
+    "lastname": "Jüttner",
+    "fullname": "Sibylle Jüttner",
+    "party_wikidata_id": "Q303745",
+    "position": 2,
+    "role": {
+     "de": "Mitunterzeichnerin / Mitunterzeichner"
+    },
+    "party": {
+     "de": "SP"
+    },
+    "party_harmonized": {
+     "de": "Sozialdemokratische Partei",
+     "fr": "Parti Socialiste",
+     "it": "Partito Socialista"
+    }
+   },
+   {
+    "id": 787956,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": "7aa78bd2b3c34bb696e7bddede633e43_1",
+    "affair_id": 219288,
+    "person_id": 17638,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "person",
+    "role_external_id": null,
+    "role_harmonized": {
+     "de": "Urheber/in",
+     "fr": "Auteur",
+     "it": "Autore",
+     "rm": "Autur",
+     "en": "Author"
+    },
+    "firstname": "Carmen",
+    "lastname": "Marty Fässler",
+    "fullname": "Carmen Marty Fässler",
+    "party_wikidata_id": "Q303745",
+    "position": 1,
+    "role": {
+     "de": "Erstunterzeichnerin / Erstunterzeichner"
+    },
+    "party": {
+     "de": "SP"
+    },
+    "party_harmonized": {
+     "de": "Sozialdemokratische Partei",
+     "fr": "Parti Socialiste",
+     "it": "Partito Socialista"
+    }
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 4,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/219288?expand=contributors&contributors_offset=0&contributors_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/219288?expand=contributors&contributors_offset=0&contributors_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/219288?expand=contributors&contributors_offset=0&contributors_limit=100"
+  }
+ },
+ "docs": {
+  "data": [
+   {
+    "id": 688449,
+    "body_id": 275,
+    "body_key": "ZH",
+    "parent_type": "affair",
+    "external_id": "21a4ff447bb844bb9a49348e4a322fb7",
+    "external_alternative_id": null,
+    "name": "VOTE-KRZH-20260309-091738-T007-00-0019260.pdf",
+    "url": "https://parlzhcdws.cmicloud.ch/parlzh5/cdws/Files/21a4ff447bb844bb9a49348e4a322fb7-332/1/pdf",
+    "url_oparl": "https://files.openparldata.ch/doc/ZH/662c369cfeca4c7a6b3fde123edb813836e0df39cb14db93440d31447abfcc15",
+    "date": "2026-03-09T00:00:00",
+    "size": 574516,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "Kantonsrat Zurich\n\nAbstimmungsdatum 09.Marz 2026 09:17:05\nAbstimmungsmodus Offen\nGeschaftsnummer 104/2025\n\nGeschaft Traktandum 7\nErgebnis\n\nJa 36\n\nNein 138\n\nEnthaltung 0\n\nNicht anwesend 5\n\nAbgestimmt 1",
+    "affair_id": 219288,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {}
+   },
+   {
+    "id": 633192,
+    "body_id": 275,
+    "body_key": "ZH",
+    "parent_type": "affair",
+    "external_id": "0c2650107e4646e4b45ab71f3a7115fe",
+    "external_alternative_id": null,
+    "name": "Stellungnahme_RR_104-2025_Ein_eigener_Hochschulrat_fuer_die_Paedagogische_Hochschule_Zuerich",
+    "url": "https://parlzhcdws.cmicloud.ch/parlzh5/cdws/Files/0c2650107e4646e4b45ab71f3a7115fe-332/2/pdf",
+    "url_oparl": "https://files.openparldata.ch/doc/ZH/63fd779f21373cfbc88327416dd79af882835b4d6a01e4f2a9cb68e1786c2501",
+    "date": "2025-06-11T00:00:00",
+    "size": 75915,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "Auszug aus dem Protokoll  \ndes Regierungsrates des Kantons Zürich\n\nSitzung vom 11. Juni 2025\n\n630. Motion (Ein eigener Hochschulrat für die Pädagogische  \nHochschule Zürich)\n\nDie Kantonsrätinnen Carme",
+    "affair_id": 219288,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {}
+   },
+   {
+    "id": 473124,
+    "body_id": 275,
+    "body_key": "ZH",
+    "parent_type": "affair",
+    "external_id": "0c2650107e4646e4b45ab71f3a7115fe",
+    "external_alternative_id": null,
+    "name": "Stellungnahme_RR_104-2025_Ein_eigener_Hochschulrat_fuer_die_Paedagogische_Hochschule_Zuerich",
+    "url": "https://parlzhcdws.cmicloud.ch/parlzh5/cdws/Files/0c2650107e4646e4b45ab71f3a7115fe-332/1/pdf",
+    "url_oparl": "https://files.openparldata.ch/doc/ZH/e943037840b8150aa25e3175f5a4c800385d83d9081dd5f6ae2b407259b10dcb",
+    "date": "2025-06-11T00:00:00",
+    "size": 75915,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "Auszug aus dem Protokoll  \ndes Regierungsrates des Kantons Zürich\n\nSitzung vom 11. Juni 2025\n\n630. Motion (Ein eigener Hochschulrat für die Pädagogische  \nHochschule Zürich)\n\nDie Kantonsrätinnen Carme",
+    "affair_id": 219288,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {}
+   },
+   {
+    "id": 473123,
+    "body_id": 275,
+    "body_key": "ZH",
+    "parent_type": "affair",
+    "external_id": "eb5c22139a344229afa308f3b9c74b3c",
+    "external_alternative_id": null,
+    "name": "Motion_104-2025_Ein_eigener_Hochschulrat_fuer_die_Paedagogische_Hochschule_Zuerich",
+    "url": "https://parlzhcdws.cmicloud.ch/parlzh5/cdws/Files/eb5c22139a344229afa308f3b9c74b3c-332/1/pdf",
+    "url_oparl": "https://files.openparldata.ch/doc/ZH/9803fe3b2965f235d0536095c75cee8c3f94b00196531082d54358ac5afc1421",
+    "date": "2025-03-31T00:00:00",
+    "size": 111890,
+    "category_harmonized": null,
+    "format": "application/pdf",
+    "language": null,
+    "text": "Adliswil, Andelfingen und Zürich, 31. März 2025  \nKR-Nr. 104/2025 \n\n \n\n \n \nM O T I O N von Carmen Marty Fässler (SP, Adliswil), Sibylle Jüttner (SP, Andelfin-\n\ngen) und Monika Wicki (SP, Zürich) \n \nbe",
+    "affair_id": 219288,
+    "meeting_id": null,
+    "agenda_id": null,
+    "news_id": null,
+    "category": {}
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 4,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/219288?expand=docs&docs_offset=0&docs_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/219288?expand=docs&docs_offset=0&docs_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/219288?expand=docs&docs_offset=0&docs_limit=100"
+  }
+ },
+ "events": {
+  "data": [
+   {
+    "id": 567402,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": "087bfec7731d43d2b957371e581b3ab5",
+    "date": "2025-03-31T00:00:00",
+    "position": 1,
+    "title_external_id": null,
+    "title_harmonized": {
+     "de": "Eingereicht",
+     "fr": "Déposé",
+     "it": "Presentato",
+     "en": "Submitted"
+    },
+    "title_harmonized_id": 1,
+    "title_harmonized_wikidata_id": null,
+    "last": false,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 219288,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": null,
+    "title": {
+     "de": "Eingereicht"
+    },
+    "actor": {}
+   },
+   {
+    "id": 567403,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": "c41b131f0de443ffb9cf26377ea1e6d1",
+    "date": "2025-06-11T00:00:00",
+    "position": 2,
+    "title_external_id": null,
+    "title_harmonized": {
+     "de": "Antrag: Ablehnen",
+     "fr": "Proposition : Rejeter",
+     "it": "Proposta: respingere",
+     "en": "Motion: Reject"
+    },
+    "title_harmonized_id": 29,
+    "title_harmonized_wikidata_id": null,
+    "last": false,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 219288,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": null,
+    "title": {
+     "de": "Stellungnahme Regierungsrat"
+    },
+    "actor": {
+     "de": "Regierung"
+    }
+   },
+   {
+    "id": 902219,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": null,
+    "date": "2025-06-23T08:15:00",
+    "position": 3,
+    "title_external_id": null,
+    "title_harmonized": {
+     "de": "Bereit zur Traktandierung",
+     "fr": "Prêt pour l'ordre du jour",
+     "it": "Pronto per l'ordine del giorno",
+     "en": "Ready for the agenda"
+    },
+    "title_harmonized_id": 47,
+    "title_harmonized_wikidata_id": null,
+    "last": false,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 219288,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": null,
+    "title": {
+     "de": "Bereit zur Traktandierung"
+    },
+    "actor": {
+     "de": "Parlament"
+    }
+   },
+   {
+    "id": 850366,
+    "body_id": 275,
+    "body_key": "ZH",
+    "external_id": "a2382e4e8ff4447dac3376cb772f4f9c",
+    "date": "2026-03-09T00:00:00",
+    "position": 5,
+    "title_external_id": null,
+    "title_harmonized": {
+     "de": "Abgelehnt",
+     "fr": "Rejeté",
+     "it": "Respinto",
+     "en": "Rejected"
+    },
+    "title_harmonized_id": 35,
+    "title_harmonized_wikidata_id": null,
+    "last": true,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 219288,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": "Der Kantonsrat hat mit 138 zu 36 Stimmen die Motion betreffend «Ein eigener Hochschulrat für die Pädagogische Hochschule Zürich» der SP abgelehnt, mit der Grundlagen für die Pädagogische Hochschule Zürich (PHZH) gefordert wurden, um einen eigenen Hochschulrat zu ermöglichen. Das Geschäft ist damit erledigt.",
+    "title": {
+     "de": "Ablehnung mit 138 NEIN, 36 JA, 0 ENTH."
+    },
+    "actor": {
+     "de": "Parlament"
+    }
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 4,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/219288?expand=events&events_offset=0&events_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/219288?expand=events&events_offset=0&events_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/219288?expand=events&events_offset=0&events_limit=100"
+  }
+ },
+ "links": {
+  "contributors": "https://api.openparldata.ch/v1/affairs/219288/contributors",
+  "docs": "https://api.openparldata.ch/v1/affairs/219288/docs",
+  "events": "https://api.openparldata.ch/v1/affairs/219288/events",
+  "texts": "https://api.openparldata.ch/v1/affairs/219288/texts",
+  "speeches": "https://api.openparldata.ch/v1/affairs/219288/speeches",
+  "votings": "https://api.openparldata.ch/v1/affairs/219288/votings",
+  "agendas": "https://api.openparldata.ch/v1/affairs/219288/agendas",
+  "meetings": "https://api.openparldata.ch/v1/affairs/219288/meetings",
+  "bodies": "https://api.openparldata.ch/v1/affairs/219288/bodies",
+  "external_links": "https://api.openparldata.ch/v1/affairs/219288/external_links"
+ }
+}

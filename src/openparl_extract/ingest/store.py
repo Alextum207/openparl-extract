@@ -55,7 +55,7 @@ def load_manifest(path: Path) -> dict:
 
 
 def ingest_affair(client: OpenParlDataClient, affair_id: int | str, root: Path) -> Path:
-    affair = client.get_affair(affair_id, expand_docs=True)
+    affair = client.get_affair(affair_id)
     pdfs = {d["id"]: client.download_pdf(d["url_oparl"]) for d in _docs(affair)
             if _is_pdf(d) and d.get("url_oparl")}
     return save_affair(affair, pdfs, root)

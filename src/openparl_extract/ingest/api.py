@@ -55,8 +55,10 @@ class OpenParlDataClient:
                 return
             offset += page_size
 
-    def get_affair(self, affair_id: int | str, expand_docs: bool = True) -> dict:
-        return self._get(f"/v1/affairs/{affair_id}", expand="docs" if expand_docs else None).json()
+    def get_affair(self, affair_id: int | str, expand: str | None = "docs,events,contributors") -> dict:
+        # comma-separated expand verified live; relations come back as {"data": [...], "meta": {...}}
+        # ponytail: relations are capped at 100 rows (meta.has_more); follow meta.next_page if an affair exceeds it
+        return self._get(f"/v1/affairs/{affair_id}", expand=expand).json()
 
     def list_bodies(self) -> list[dict]:
         out, offset = [], 0

@@ -1,0 +1,195 @@
+{
+ "id": 340788,
+ "url_api": "https://api.openparldata.ch/v1/affairs/340788",
+ "body_key": "CHE",
+ "external_id": "20264622",
+ "external_alternative_id": null,
+ "number": "26.4622",
+ "title": {
+  "fr": "Prescription pénale : comment mieux garantir la justice aux victimes d’infractions sexuelles"
+ },
+ "body_id": 42,
+ "type_external_id": "8",
+ "type_harmonized_id": 8,
+ "type_harmonized_wikidata_id": "Q1505023",
+ "state_external_id": "202",
+ "state_name_harmonized_id": null,
+ "begin_date": "2026-10-02T00:00:00",
+ "end_date": null,
+ "active": null,
+ "updated_external_at": null,
+ "updated_at": "2026-10-04T02:19:24",
+ "created_at": "2026-10-03T06:31:51",
+ "title_long": {},
+ "type_name": {
+  "de": "Interpellation",
+  "fr": "Interpellation",
+  "it": "Interpellanza"
+ },
+ "type_harmonized": {
+  "de": "Interpellation",
+  "fr": "Interpellation",
+  "it": "interpellanza",
+  "rm": "interpellaziun",
+  "en": "Interpellation"
+ },
+ "state_name": {
+  "de": "Eingereicht",
+  "fr": "Déposé",
+  "it": "Depositato"
+ },
+ "state_name_harmonized": {},
+ "url_external": {
+  "de": "https://www.parlament.ch/de/ratsbetrieb/suche-curia-vista/geschaeft?AffairId=20264622",
+  "fr": "https://www.parlament.ch/fr/ratsbetrieb/suche-curia-vista/geschaeft?AffairId=20264622",
+  "it": "https://www.parlament.ch/it/ratsbetrieb/suche-curia-vista/geschaeft?AffairId=20264622"
+ },
+ "contributors": {
+  "data": [
+   {
+    "id": 1510053,
+    "body_id": 42,
+    "body_key": "CHE",
+    "external_id": "20264622_council_initial_1",
+    "affair_id": 340788,
+    "person_id": null,
+    "group_id": 1663,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "group",
+    "role_external_id": "council_initial",
+    "role_harmonized": {
+     "de": "Initialer Rat",
+     "fr": "Conseil initial",
+     "it": "Consiglio iniziale",
+     "rm": "Cussegl inizial",
+     "en": "Council Initial"
+    },
+    "firstname": null,
+    "lastname": "Nationalrat",
+    "fullname": "Nationalrat",
+    "party_wikidata_id": null,
+    "position": 2,
+    "role": {
+     "de": "Erstbehandelnder Rat",
+     "fr": "Conseil prioritaire",
+     "it": "Camera prioritaria"
+    },
+    "party": {},
+    "party_harmonized": {}
+   },
+   {
+    "id": 1510052,
+    "body_id": 42,
+    "body_key": "CHE",
+    "external_id": "20264622_author_4271",
+    "affair_id": 340788,
+    "person_id": 21735,
+    "group_id": null,
+    "meeting_id": null,
+    "session_id": null,
+    "news_id": null,
+    "type": "person",
+    "role_external_id": "author",
+    "role_harmonized": {
+     "de": "Urheber/in",
+     "fr": "Auteur",
+     "it": "Autore",
+     "rm": "Autur",
+     "en": "Author"
+    },
+    "firstname": "Sidney",
+    "lastname": "Kamerzin",
+    "fullname": "Sidney Kamerzin",
+    "party_wikidata_id": "Q100934025",
+    "position": 1,
+    "role": {
+     "de": "Urheber(-in)",
+     "fr": "Auteur",
+     "it": "Autore"
+    },
+    "party": {
+     "de": "M-E",
+     "fr": "M-E",
+     "it": "M-E"
+    },
+    "party_harmonized": {
+     "de": "Die Mitte",
+     "fr": "Le Centre",
+     "it": "Alleanza del Centro"
+    }
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 2,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/340788?expand=contributors&contributors_offset=0&contributors_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/340788?expand=contributors&contributors_offset=0&contributors_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/340788?expand=contributors&contributors_offset=0&contributors_limit=100"
+  }
+ },
+ "docs": null,
+ "events": {
+  "data": [
+   {
+    "id": 978699,
+    "body_id": 42,
+    "body_key": "CHE",
+    "external_id": "202",
+    "date": "2026-10-02T00:00:00",
+    "position": 1,
+    "title_external_id": null,
+    "title_harmonized": {},
+    "title_harmonized_id": null,
+    "title_harmonized_wikidata_id": null,
+    "last": true,
+    "actor_external_id": null,
+    "actor_type": null,
+    "affair_id": 340788,
+    "meeting_parent_type": null,
+    "meeting_id": null,
+    "meeting_parent_external_id": null,
+    "details_url": null,
+    "details_text": null,
+    "title": {
+     "de": "Eingereicht",
+     "fr": "Déposé",
+     "it": "Depositato"
+    },
+    "actor": {}
+   }
+  ],
+  "meta": {
+   "offset": 0,
+   "limit": 100,
+   "total_records": 1,
+   "total_pages": 1,
+   "current_page": 1,
+   "has_more": false,
+   "next_page": null,
+   "prev_page": null,
+   "first_page": "https://api.openparldata.ch/v1/affairs/340788?expand=events&events_offset=0&events_limit=100",
+   "last_page": "https://api.openparldata.ch/v1/affairs/340788?expand=events&events_offset=0&events_limit=100",
+   "self": "https://api.openparldata.ch/v1/affairs/340788?expand=events&events_offset=0&events_limit=100"
+  }
+ },
+ "links": {
+  "contributors": "https://api.openparldata.ch/v1/affairs/340788/contributors",
+  "docs": "https://api.openparldata.ch/v1/affairs/340788/docs",
+  "events": "https://api.openparldata.ch/v1/affairs/340788/events",
+  "texts": "https://api.openparldata.ch/v1/affairs/340788/texts",
+  "speeches": "https://api.openparldata.ch/v1/affairs/340788/speeches",
+  "votings": "https://api.openparldata.ch/v1/affairs/340788/votings",
+  "agendas": "https://api.openparldata.ch/v1/affairs/340788/agendas",
+  "meetings": "https://api.openparldata.ch/v1/affairs/340788/meetings",
+  "bodies": "https://api.openparldata.ch/v1/affairs/340788/bodies",
+  "external_links": "https://api.openparldata.ch/v1/affairs/340788/external_links"
+ }
+}

@@ -147,3 +147,27 @@ def test_live_smoke(tmp_path):
     d = ingest_affair(OpenParlDataClient(), 340560, tmp_path)
     m = load_manifest(d / "manifest.json")
     assert m["primary_doc_id"] and m["docs"][0]["pdf_sha256"]
+
+
+def test_get_affair_expands_docs_events_contributors():
+    seen = {}
+
+    def h(req):
+        seen.update(req.url.params)
+        return httpx.Response(200, json=fx("affair_340560.json"))
+
+    client(h).get_affair(340560)
+    assert seen["expand"] == "docs,events,contributors"
+
+
+def test_ingest_stores_events_and_contributors(tmp_path):
+    merge_fx = Path(__file__).parent / "fixtures" / "merge" / "zurich_city_interpellation_14228.json"
+    full = json.loads(merge_fx.read_text(encoding="utf-8"))
+    full["docs"]["data"] = full["docs"]["data"][:1]
+
+    def h(req):
+        return httpx.Response(200, content=PDF) if req.url.host == "files.openparldata.ch" else httpx.Response(200, json=full)
+
+    d = ingest_affair(client(h), 14228, tmp_path)
+    stored = json.loads((d / "affair.json").read_text(encoding="utf-8"))
+    assert len(stored["events"]["data"]) == 3 and stored["contributors"]["data"][0]["fullname"]
