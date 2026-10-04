@@ -292,7 +292,7 @@ def test_server_bound_local(server):
 def test_static_and_traversal(server):
     srv, _ = server
     s, ct, b = call(srv, "GET", "/")
-    assert s == 200 and ct.startswith("text/html") and b"review app backend running" in b
+    assert s == 200 and ct.startswith("text/html") and b"/api/i18n" in b
     assert call(srv, "GET", "/static/index.html")[0] == 200
     for p in ("/static/..%2f..%2fpyproject.toml", "/static/../app.py", "/static/nope.js", "/static/%2fetc%2fpasswd",
               "/static/..%5capp.py"):

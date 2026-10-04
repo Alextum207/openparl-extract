@@ -1,3 +1,516 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Review</title></head>
-<body><p>review app backend running</p></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Gold review</title>
+<style>
+:root {
+  --bg: #f6f5f2; --card: #ffffff; --text: #1e1e1e; --muted: #5a5a5a; --line: #c9c6bf; --accent: #1f5fae; --accent-text: #ffffff;
+  --ok-bg: #e3f4e6; --ok-fg: #14401f; --ok-bd: #2e7d32;
+  --bad-bg: #fde8e1; --bad-fg: #7a2410; --bad-bd: #c4421a;
+  --none-bg: #ececec; --none-fg: #2b2b2b; --none-bd: #6b6b6b;
+  --unsure-bg: #e3eefb; --unsure-fg: #0f3a73; --unsure-bd: #2a64b8;
+  --cited: rgba(255, 214, 0, .38); --cited-bd: #a07d00; --sel: rgba(30, 100, 220, .35); --sel-bd: #1e64dc;
+  --err-bg: #fde8e1; --err-fg: #7a2410;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17181a; --card: #222427; --text: #ececec; --muted: #a9a9a9; --line: #44474c; --accent: #6fa8ec; --accent-text: #0b1a2e;
+    --ok-bg: #17331d; --ok-fg: #cdeed4; --ok-bd: #5fb26a;
+    --bad-bg: #3b1a12; --bad-fg: #ffd9cc; --bad-bd: #e07a55;
+    --none-bg: #2c2c2c; --none-fg: #e4e4e4; --none-bd: #8c8c8c;
+    --unsure-bg: #12294a; --unsure-fg: #cfe1fb; --unsure-bd: #6b9ee0;
+    --cited: rgba(255, 214, 0, .30); --cited-bd: #d9b400; --sel: rgba(90, 160, 255, .38); --sel-bd: #6fa8ec;
+    --err-bg: #3b1a12; --err-fg: #ffd9cc;
+  }
+}
+* { box-sizing: border-box; }
+html { font-size: 18px; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.45; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+header { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; padding: .6rem 1rem; background: var(--card); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 10; }
+header h1 { font-size: 1.1rem; margin: 0; }
+#hdr-progress { flex: 1 1 220px; min-width: 0; }
+#progress-bar { width: 100%; height: .6rem; accent-color: var(--accent); }
+#progress-text { font-size: .85rem; color: var(--muted); display: block; }
+#hdr-reviewer { font-size: .9rem; color: var(--muted); }
+.langs { display: flex; gap: .25rem; }
+.btn { min-height: 48px; min-width: 48px; padding: .4rem .9rem; border: 2px solid var(--line); border-radius: 10px; background: var(--card); cursor: pointer; }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); font-weight: 600; }
+.btn-primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+kbd { display: inline-block; min-width: 1.5em; padding: 0 .35em; margin-right: .5em; border: 1px solid currentColor; border-radius: 5px; font: inherit; font-size: .8em; text-align: center; opacity: .85; }
+
+main { max-width: 1400px; margin: 0 auto; padding: 1rem; }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.25rem; }
+.stack > * + * { margin-top: 1rem; }
+label { display: block; font-weight: 600; margin-bottom: .25rem; }
+input[type=text], input[type=date], textarea { width: 100%; min-height: 48px; padding: .5rem .75rem; border: 2px solid var(--line); border-radius: 10px; background: var(--bg); }
+textarea { min-height: 5rem; resize: vertical; }
+.hint { color: var(--muted); font-size: .9rem; margin: .25rem 0 0; }
+.checks { display: flex; flex-wrap: wrap; gap: .5rem; }
+.checks label { display: flex; align-items: center; gap: .5rem; min-height: 48px; padding: 0 .9rem; border: 2px solid var(--line); border-radius: 10px; margin: 0; font-weight: 400; cursor: pointer; }
+.checks input { width: 1.3rem; height: 1.3rem; }
+#screen-start { max-width: 640px; margin: 2vh auto; }
+
+#screen-question { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+#card { order: 1; } #pdf-col { order: 2; }
+@media (min-width: 900px) {
+  #screen-question { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); align-items: start; }
+  #pdf-col { order: 1; position: sticky; top: 5rem; } #card { order: 2; }
+}
+#q-prompt { font-size: 1.5rem; line-height: 1.3; margin: 0 0 1rem; }
+#q-context { margin: 0 0 1rem; padding: .5rem .9rem; border-left: 4px solid var(--line); color: var(--muted); }
+#q-context span { display: block; font-size: .8rem; text-transform: none; }
+#q-value { border: 2px solid var(--line); border-radius: 10px; padding: .75rem 1rem; margin: 0 0 1rem; background: var(--bg); }
+#q-value .lbl { font-size: .8rem; color: var(--muted); display: block; }
+#q-pipeline { font-size: 1.1rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+#q-quote { font-size: .85rem; color: var(--muted); margin-top: .5rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+#answers { display: grid; gap: .6rem; }
+.ans { display: flex; align-items: center; width: 100%; min-height: 56px; padding: .5rem 1rem; border: 2px solid; border-radius: 12px; cursor: pointer; text-align: left; font-size: 1.05rem; }
+.ans-ok { background: var(--ok-bg); color: var(--ok-fg); border-color: var(--ok-bd); }
+.ans-bad { background: var(--bad-bg); color: var(--bad-fg); border-color: var(--bad-bd); }
+.ans-none { background: var(--none-bg); color: var(--none-fg); border-color: var(--none-bd); }
+.ans-unsure { background: var(--unsure-bg); color: var(--unsure-fg); border-color: var(--unsure-bd); }
+.ans:disabled { opacity: .55; cursor: default; }
+#correction { margin-top: 0; }
+#correction h3 { margin: 0 0 .5rem; font-size: 1.15rem; }
+#vocab-grid { display: grid; gap: .5rem; }
+#sel-box { border: 2px dashed var(--sel-bd); border-radius: 10px; padding: .6rem .9rem; margin: .5rem 0 1rem; white-space: pre-wrap; overflow-wrap: anywhere; font-size: .95rem; }
+.row { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1rem; }
+
+#pdf-nav { display: flex; align-items: center; justify-content: center; gap: .75rem; margin-bottom: .6rem; }
+#pdf-wrap { position: relative; border: 1px solid var(--line); background: #fff; line-height: 0; }
+#page-img { width: 100%; height: auto; display: block; }
+#overlay { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.blk { position: absolute; border: 1px solid transparent; border-radius: 2px; }
+.picking .blk { border-color: rgba(30, 100, 220, .45); cursor: pointer; }
+.picking .blk:hover { background: rgba(30, 100, 220, .15); }
+.blk.cited { background: var(--cited); border: 2px solid var(--cited-bd); }
+.blk.selected { background: var(--sel); border: 2px solid var(--sel-bd); }
+#page-note { margin: .6rem 0 0; color: var(--muted); font-size: .9rem; }
+
+#banner { position: fixed; left: 1rem; right: 1rem; bottom: 1rem; max-width: 640px; margin: 0 auto; display: flex; gap: .75rem; align-items: center; justify-content: space-between; background: var(--err-bg); color: var(--err-fg); border: 2px solid var(--bad-bd); border-radius: 12px; padding: .6rem .9rem; z-index: 30; }
+#toast { position: fixed; top: 4.5rem; right: 1rem; background: var(--ok-bd); color: #fff; padding: .4rem .9rem; border-radius: 999px; z-index: 30; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; }
+#toast.show { opacity: 1; }
+table { border-collapse: collapse; width: 100%; font-size: .95rem; }
+th, td { border-bottom: 1px solid var(--line); padding: .4rem .5rem; text-align: left; }
+td.n, th.n { text-align: right; }
+.wrapx { overflow-x: auto; }
+@media (max-width: 480px) { html { font-size: 17px; } main { padding: .6rem; } .panel { padding: .9rem; } }
+</style>
+</head>
+<body>
+<header id="app-header">
+  <h1 id="app-title" data-i18n="app.title">Gold review</h1>
+  <div id="hdr-progress" hidden>
+    <progress id="progress-bar" value="0" max="1" aria-labelledby="progress-text"></progress>
+    <span id="progress-text" data-testid="progress-text"></span>
+  </div>
+  <span id="hdr-reviewer" data-testid="hdr-reviewer"></span>
+  <button type="button" class="btn" id="undo-btn" data-testid="undo-btn" hidden><kbd>Z</kbd><span data-i18n="btn.undo">Undo</span></button>
+  <div class="langs" role="group" aria-label="Language">
+    <button type="button" class="btn" id="lang-de" data-testid="lang-de" data-lang="de" aria-pressed="false">DE</button>
+    <button type="button" class="btn" id="lang-it" data-testid="lang-it" data-lang="it" aria-pressed="false">IT</button>
+    <button type="button" class="btn" id="lang-en" data-testid="lang-en" data-lang="en" aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<main id="main">
+  <section id="screen-start" class="panel stack" data-testid="screen-start" hidden>
+    <div>
+      <label for="reviewer-input" data-i18n="reviewer.prompt">Name</label>
+      <input type="text" id="reviewer-input" data-testid="reviewer-input" maxlength="40" autocomplete="name">
+      <p class="hint" data-i18n="reviewer.hint"></p>
+    </div>
+    <fieldset class="stack" style="border:0;padding:0;margin:0">
+      <legend style="font-weight:600;padding:0;margin-bottom:.25rem" data-i18n="filter.languages">Languages</legend>
+      <div class="checks" id="lang-filter">
+        <label><input type="checkbox" id="flt-de" data-testid="flt-de" value="de" checked><span data-i18n="lang.de"></span></label>
+        <label><input type="checkbox" id="flt-fr" data-testid="flt-fr" value="fr" checked><span data-i18n="lang.fr"></span></label>
+        <label><input type="checkbox" id="flt-it" data-testid="flt-it" value="it" checked><span data-i18n="lang.it"></span></label>
+        <button type="button" class="btn" id="flt-all" data-testid="flt-all" data-i18n="filter.all">All</button>
+      </div>
+    </fieldset>
+    <button type="button" class="btn btn-primary" id="start-btn" data-testid="start-btn" data-i18n="btn.start">Start</button>
+  </section>
+
+  <section id="screen-question" data-testid="screen-question" hidden>
+    <div id="card" class="panel" data-testid="card">
+      <h2 id="q-prompt" data-testid="q-prompt" tabindex="-1"></h2>
+      <blockquote id="q-context" data-testid="q-context" hidden><span id="q-context-label"></span><span id="q-context-text"></span></blockquote>
+      <div id="q-value" data-testid="q-value" hidden>
+        <span class="lbl" id="q-value-label"></span>
+        <div id="q-pipeline" data-testid="q-pipeline"></div>
+        <div id="q-quote" data-testid="q-quote" hidden></div>
+      </div>
+      <div id="answers" data-testid="answers"></div>
+      <section id="correction" data-testid="correction" hidden aria-labelledby="corr-title">
+        <h3 id="corr-title" data-i18n="correction.title"></h3>
+        <p class="hint" id="corr-hint"></p>
+        <div id="corr-text" hidden>
+          <div id="sel-box" data-testid="sel-box" aria-live="polite"></div>
+          <label for="gold-text" data-i18n="correction.own_text"></label>
+          <textarea id="gold-text" data-testid="gold-text" maxlength="5000"></textarea>
+        </div>
+        <div id="vocab-grid" data-testid="vocab-grid" hidden></div>
+        <div id="corr-date" hidden>
+          <label for="gold-date" data-i18n="hint.date"></label>
+          <input type="date" id="gold-date" data-testid="gold-date">
+        </div>
+        <div class="row">
+          <button type="button" class="btn btn-primary" id="btn-confirm" data-testid="btn-confirm"><kbd>Enter</kbd><span data-i18n="btn.confirm"></span></button>
+          <button type="button" class="btn" id="btn-cancel" data-testid="btn-cancel" data-i18n="btn.cancel"></button>
+        </div>
+      </section>
+    </div>
+    <div id="pdf-col">
+      <div id="pdf-nav">
+        <button type="button" class="btn" id="page-prev" data-testid="page-prev" data-i18n-aria="page.prev" aria-label="Previous page">&#8249;</button>
+        <span id="page-label" data-testid="page-label" aria-live="polite"></span>
+        <button type="button" class="btn" id="page-next" data-testid="page-next" data-i18n-aria="page.next" aria-label="Next page">&#8250;</button>
+      </div>
+      <div id="pdf-wrap" data-testid="pdf-wrap">
+        <img id="page-img" data-testid="page-img" alt="">
+        <div id="overlay" data-testid="overlay"></div>
+      </div>
+      <p id="page-note" data-testid="page-note" hidden></p>
+    </div>
+  </section>
+
+  <section id="screen-done" class="panel stack" data-testid="screen-done" hidden>
+    <h2 id="done-title" data-i18n="summary.title" tabindex="-1"></h2>
+    <p data-i18n="summary.text"></p>
+    <p id="unsure-text" data-testid="unsure-text"></p>
+    <div class="wrapx">
+      <table id="summary-table" data-testid="summary-table"><caption data-i18n="summary.counts" style="text-align:left;font-weight:600;padding-bottom:.4rem"></caption>
+        <thead><tr><th scope="col"></th><th scope="col" class="n" data-i18n="btn.correct"></th><th scope="col" class="n" data-i18n="btn.wrong"></th><th scope="col" class="n" data-i18n="btn.not_in_document"></th><th scope="col" class="n" data-i18n="btn.unsure"></th></tr></thead>
+        <tbody id="summary-body"></tbody>
+      </table>
+    </div>
+    <div class="row">
+      <button type="button" class="btn btn-primary" id="btn-review-unsure" data-testid="btn-review-unsure" data-i18n="summary.review_unsure" hidden></button>
+      <button type="button" class="btn" id="btn-start-over" data-testid="btn-start-over" data-i18n="btn.start_over"></button>
+    </div>
+  </section>
+</main>
+
+<div id="banner" data-testid="banner" role="alert" hidden><span id="banner-text"></span><button type="button" class="btn" id="banner-close" data-testid="banner-close" data-i18n="btn.dismiss"></button></div>
+<div id="toast" data-testid="toast" role="status" aria-live="polite"></div>
+
+<script src="/static/logic.js"></script>
+<script>
+"use strict";
+/* All visible text comes from GET /api/i18n; the page only holds layout. DOM text is always set via textContent. */
+var $ = function (id) { return document.getElementById(id); };
+var S = { lang: "en", i18n: {}, reviewer: "", langs: ["de", "fr", "it"], q: null, page: 1, picking: false, sel: null,
+          busy: false, include: false, token: 0, blocks: {}, screen: "start", toastTimer: null, vocabPick: null };
+
+function t(key) { return Object.prototype.hasOwnProperty.call(S.i18n, key) ? S.i18n[key] : key; }
+function store(k, v) { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } return null; }
+function qs(o) { var p = new URLSearchParams(); Object.keys(o).forEach(function (k) { if (o[k] !== null && o[k] !== undefined && o[k] !== "") p.set(k, o[k]); }); return p.toString(); }
+function langsParam() { return S.langs.length && S.langs.length < 3 ? S.langs.join(",") : ""; }
+
+async function api(path, body) {
+  var opt = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  var r;
+  try { r = await fetch(path, opt); } catch (e) { throw new Error(t("err.server")); }
+  var data = null;
+  try { data = await r.json(); } catch (e) { data = null; }
+  if (!r.ok) { var err = new Error((data && data.error) || t("err.server")); err.status = r.status; throw err; }
+  return data;
+}
+
+/* ---------- i18n / chrome ---------- */
+function applyI18n() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll("[data-i18n]").forEach(function (el) { el.textContent = t(el.getAttribute("data-i18n")); });
+  document.querySelectorAll("[data-i18n-aria]").forEach(function (el) { el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria"))); });
+  document.title = t("app.title");
+  ["de", "it", "en"].forEach(function (l) { $("lang-" + l).setAttribute("aria-pressed", String(l === S.lang)); });
+  $("reviewer-input").placeholder = "";
+}
+async function loadI18n(lang) {
+  S.i18n = await api("/api/i18n?" + qs({ lang: lang }));
+  S.lang = lang; store("oc_lang", lang); applyI18n();
+}
+async function setLang(lang) {
+  try { await loadI18n(lang); } catch (e) { return showBanner(e.message); }
+  if (S.screen === "question" && S.q) loadQuestion({ doc: S.q.doc_key, field: S.q.field });
+  else if (S.screen === "done") loadQuestion();
+  else updateProgressText();
+}
+function showScreen(name) {
+  S.screen = name;
+  ["start", "question", "done"].forEach(function (n) { $("screen-" + n).hidden = n !== name; });
+  $("hdr-progress").hidden = name === "start";
+  $("undo-btn").hidden = name === "start";
+  $("hdr-reviewer").textContent = name === "start" ? "" : S.reviewer;
+}
+function showBanner(msg) { $("banner-text").textContent = msg; $("banner").hidden = false; }
+function toast(msg) {
+  var el = $("toast"); el.textContent = msg; el.classList.add("show");
+  clearTimeout(S.toastTimer); S.toastTimer = setTimeout(function () { el.classList.remove("show"); }, 1800);
+}
+function setBusy(b) {
+  S.busy = b;
+  document.querySelectorAll("#answers button, #correction button, #undo-btn, #page-prev, #page-next").forEach(function (el) { el.disabled = b || el.dataset.off === "1"; });
+}
+
+/* ---------- progress ---------- */
+var lastProgress = null;
+async function refreshProgress() {
+  try { lastProgress = await api("/api/progress?" + qs({ reviewer: S.reviewer, languages: langsParam() })); } catch (e) { return; }
+  updateProgressText();
+}
+function updateProgressText() {
+  if (!lastProgress) return;
+  var p = Logic.progressNumbers(lastProgress);
+  $("progress-bar").max = Math.max(p.total, 1); $("progress-bar").value = lastProgress.questions_done;
+  $("progress-text").textContent = Logic.fill(t("progress.question"), { n: p.n, total: p.total }) + " · " + Logic.fill(t("progress.document"), { d: p.d, docs: p.docs });
+}
+
+/* ---------- queue ---------- */
+async function loadQuestion(ref) {
+  setBusy(true);
+  try {
+    var q = await api("/api/question?" + qs(ref ? { doc: ref.doc, field: ref.field, lang: S.lang } :
+      { reviewer: S.reviewer, lang: S.lang, languages: langsParam(), include_unsure: S.include ? "1" : "0" }));
+    if (q.done) showDone(q); else showQuestion(q);
+    refreshProgress();
+  } catch (e) { showBanner(e.message); }
+  finally { setBusy(false); }
+}
+
+function showQuestion(q) {
+  S.q = q; S.picking = false; S.sel = null; S.vocabPick = null; S.page = q.page || 1;
+  showScreen("question");
+  $("q-prompt").textContent = q.prompt;
+  $("q-context").hidden = !q.question_text;
+  if (q.question_text) { $("q-context-label").textContent = t("question.paired"); $("q-context-text").textContent = q.question_text; }
+  var has = q.pipeline_value !== null && q.pipeline_value !== undefined;
+  $("q-value").hidden = !has;
+  if (has) {
+    $("q-value-label").textContent = t("pipeline.value");
+    $("q-pipeline").textContent = q.value_kind === "vocab" && S.i18n["vocab." + q.pipeline_value] ? t("vocab." + q.pipeline_value) : q.pipeline_value;
+    $("q-quote").hidden = !q.quote;
+    $("q-quote").textContent = q.quote ? t("quote.label") + ": " + q.quote : "";
+  }
+  renderAnswers();
+  $("correction").hidden = true; $("answers").hidden = false;
+  loadPage();
+  var first = $("answers").querySelector("button");
+  if (first) first.focus();
+}
+
+function renderAnswers() {
+  var box = $("answers"); box.replaceChildren();
+  S.q.options.forEach(function (o, i) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "ans ans-" + Logic.optionClass(o.key);
+    var id = o.key.replace("btn.", "");
+    b.id = "ans-" + id; b.setAttribute("data-testid", "ans-" + id); b.setAttribute("data-verdict", o.verdict);
+    b.setAttribute("data-index", String(i + 1));
+    var k = document.createElement("kbd"); k.textContent = String(i + 1);
+    var s = document.createElement("span"); s.textContent = t(o.key);
+    b.append(k, s);
+    b.addEventListener("click", function () { choose(i); });
+    box.appendChild(b);
+  });
+}
+
+function choose(i) {
+  if (S.busy || !S.q || !S.q.options[i] || S.picking || !$("correction").hidden) return;
+  var o = S.q.options[i];
+  if (o.needs_gold) enterCorrection(); else submit(o.verdict, {});
+}
+
+/* ---------- correction step ---------- */
+function enterCorrection() {
+  var q = S.q, vk = q.value_kind;
+  $("answers").hidden = true; $("correction").hidden = false;
+  $("corr-hint").textContent = vk === "text" ? t(q.kind === "presence" ? "hint.presence_yes" : "hint.wrong_text") : vk === "vocab" ? t("hint.pick_vocab") : t("hint.date");
+  $("corr-text").hidden = vk !== "text"; $("vocab-grid").hidden = vk !== "vocab"; $("corr-date").hidden = vk !== "date";
+  $("gold-text").value = ""; $("gold-date").value = ""; S.sel = null; S.vocabPick = null;
+  if (vk === "vocab") buildVocab();
+  S.picking = vk === "text"; updateSelBox(); drawOverlay();
+  if (vk === "text") { $("pdf-col").scrollIntoView({ block: "nearest" }); $("gold-text").focus(); }
+  else (vk === "date" ? $("gold-date") : $("vocab-grid").querySelector("button")).focus();
+}
+function leaveCorrection() {
+  S.picking = false; S.sel = null; $("correction").hidden = true; $("answers").hidden = false; drawOverlay();
+  var first = $("answers").querySelector("button"); if (first) first.focus();
+}
+function buildVocab() {
+  var g = $("vocab-grid"); g.replaceChildren();
+  (S.q.vocab || []).forEach(function (code) {
+    var b = document.createElement("button");
+    b.type = "button"; b.className = "btn"; b.id = "vocab-" + code; b.setAttribute("data-testid", "vocab-" + code);
+    b.setAttribute("aria-pressed", "false"); b.setAttribute("data-code", code); b.textContent = t("vocab." + code);
+    b.addEventListener("click", function () {
+      S.vocabPick = code;
+      g.querySelectorAll("button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+    });
+    g.appendChild(b);
+  });
+}
+function updateSelBox() {
+  $("sel-box").textContent = S.sel ? t("correction.selected") + ": " + S.sel.text : t("correction.none");
+}
+function selectBlock(b, page) { S.sel = { id: b.id, page: page, text: b.text }; updateSelBox(); drawOverlay(); }
+
+function confirmCorrection() {
+  if (S.busy) return;
+  var vk = S.q.value_kind, extra = {}, typed = $("gold-text").value.trim();
+  if (vk === "text") {
+    if (S.sel) { extra.gold_block_id = S.sel.id; extra.gold_value = S.sel.text; }
+    if (typed) extra.gold_value = typed;
+  } else if (vk === "vocab") { if (S.vocabPick) extra.gold_value = S.vocabPick; }
+  else if ($("gold-date").value) extra.gold_value = $("gold-date").value;
+  if (!extra.gold_value && !extra.gold_block_id) return showBanner(t("err.gold_required"));
+  submit("wrong", extra);
+}
+
+/* ---------- submit / undo ---------- */
+async function submit(verdict, extra) {
+  if (S.busy) return;
+  setBusy(true);
+  try {
+    var body = Object.assign({ doc: S.q.doc_key, field: S.q.field, verdict: verdict, reviewer: S.reviewer, lang: S.lang }, extra);
+    await api("/api/answer", body);
+    $("banner").hidden = true; toast(t("toast.saved"));
+    await loadQuestion();
+  } catch (e) { showBanner(e.message); }
+  finally { setBusy(false); }
+}
+async function undo() {
+  if (S.busy || S.screen === "start") return;
+  setBusy(true);
+  try {
+    await api("/api/undo", { reviewer: S.reviewer, lang: S.lang });
+    $("banner").hidden = true; toast(t("toast.undone"));
+    await loadQuestion();
+  } catch (e) { showBanner(e.message); }  /* keep the current question; the UI is never blocked */
+  finally { setBusy(false); }
+}
+
+/* ---------- PDF page + overlay ---------- */
+async function loadPage() {
+  var q = S.q, my = ++S.token, img = $("page-img");
+  var count = q.page_count || Math.max(S.page, 1);
+  $("page-label").textContent = Logic.fill(t("page.label"), { p: S.page, pages: count });
+  $("page-prev").dataset.off = S.page <= 1 ? "1" : "0"; $("page-next").dataset.off = S.page >= count ? "1" : "0";
+  $("page-prev").disabled = $("page-prev").dataset.off === "1"; $("page-next").disabled = $("page-next").dataset.off === "1";
+  $("page-note").hidden = true; $("overlay").replaceChildren();
+  img.hidden = false;
+  img.onload = function () { if (my === S.token) drawOverlay(); };
+  img.onerror = function () { if (my !== S.token) return; img.hidden = true; $("page-note").textContent = t("page.not_available"); $("page-note").hidden = false; };
+  img.alt = $("page-label").textContent;
+  img.src = "/api/page?" + qs({ doc: q.doc_key, page: S.page, scale: 1.5 });
+  var key = q.doc_key + "|" + S.page;
+  if (!S.blocks[key]) {
+    try { S.blocks[key] = await api("/api/blocks?" + qs({ doc: q.doc_key, page: S.page })); } catch (e) { S.blocks[key] = { blocks: [] }; }
+  }
+  if (my === S.token) drawOverlay();
+}
+function drawOverlay() {
+  var q = S.q, ov = $("overlay"), img = $("page-img");
+  ov.replaceChildren(); $("pdf-wrap").classList.toggle("picking", S.picking);
+  if (!q || img.hidden || !img.naturalWidth || !img.clientWidth) return;
+  var data = S.blocks[q.doc_key + "|" + S.page]; if (!data) return;
+  var pageW = data.width || img.naturalWidth / 1.5, shown = img.clientWidth;
+  data.blocks.forEach(function (b) {
+    if (!b.bbox) return;
+    var r = Logic.scaleBox(b.bbox, pageW, shown), d = document.createElement("div");
+    d.className = "blk"; d.id = "blk-" + b.id; d.setAttribute("data-testid", "blk-" + b.id); d.setAttribute("data-block-id", b.id);
+    d.style.left = r.left + "px"; d.style.top = r.top + "px"; d.style.width = r.width + "px"; d.style.height = r.height + "px";
+    if (b.id === q.block_id) d.classList.add("cited");
+    var sel = !!S.sel && S.sel.id === b.id;
+    if (sel) d.classList.add("selected");
+    d.title = b.text;
+    if (S.picking) {
+      d.setAttribute("role", "button"); d.tabIndex = 0; d.setAttribute("aria-pressed", String(sel)); d.setAttribute("aria-label", b.text);
+      d.addEventListener("click", function () { selectBlock(b, S.page); });
+      d.addEventListener("keydown", function (e) { if (e.key === " " || e.key === "Enter") { e.preventDefault(); e.stopPropagation(); selectBlock(b, S.page); } });
+    }
+    ov.appendChild(d);
+  });
+}
+function gotoPage(d) {
+  var count = S.q.page_count || S.page, n = S.page + d;
+  if (n < 1 || n > count) return;
+  S.page = n; loadPage();
+}
+
+/* ---------- done ---------- */
+function showDone(d) {
+  showScreen("done"); S.q = null;
+  var u = (d.progress && d.progress.questions_unsure) || 0;
+  $("unsure-text").textContent = u === 0 ? "" : u === 1 ? t("summary.unsure_one") : Logic.fill(t("summary.unsure_many"), { n: u });
+  $("btn-review-unsure").hidden = u === 0;
+  var body = $("summary-body"); body.replaceChildren();
+  Object.keys(d.summary || {}).forEach(function (fam) {
+    var tr = document.createElement("tr"), th = document.createElement("th");
+    th.scope = "row"; th.textContent = t("fam." + fam); tr.appendChild(th);
+    ["correct", "wrong", "not_in_document", "unsure"].forEach(function (v) {
+      var td = document.createElement("td"); td.className = "n"; td.textContent = String(d.summary[fam][v] || 0); tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  $("done-title").focus();
+}
+
+/* ---------- start ---------- */
+function readFilter() { return ["de", "fr", "it"].filter(function (l) { return $("flt-" + l).checked; }); }
+function start() {
+  var name = $("reviewer-input").value.trim().slice(0, 40);
+  if (!name) { showBanner(t("err.bad_reviewer")); $("reviewer-input").focus(); return; }
+  $("banner").hidden = true;
+  S.reviewer = name; S.langs = readFilter(); if (!S.langs.length) S.langs = ["de", "fr", "it"];
+  store("oc_reviewer", name); store("oc_langs", S.langs.join(","));
+  S.include = false; lastProgress = null; loadQuestion();
+}
+
+/* ---------- wiring ---------- */
+document.querySelectorAll(".langs button").forEach(function (b) { b.addEventListener("click", function () { setLang(b.getAttribute("data-lang")); }); });
+$("start-btn").addEventListener("click", start);
+$("reviewer-input").addEventListener("keydown", function (e) { if (e.key === "Enter") start(); });
+$("flt-all").addEventListener("click", function () { ["de", "fr", "it"].forEach(function (l) { $("flt-" + l).checked = true; }); });
+$("undo-btn").addEventListener("click", undo);
+$("btn-confirm").addEventListener("click", confirmCorrection);
+$("btn-cancel").addEventListener("click", leaveCorrection);
+$("page-prev").addEventListener("click", function () { gotoPage(-1); });
+$("page-next").addEventListener("click", function () { gotoPage(1); });
+$("banner-close").addEventListener("click", function () { $("banner").hidden = true; });
+$("btn-review-unsure").addEventListener("click", function () { S.include = true; loadQuestion(); });
+$("btn-start-over").addEventListener("click", function () { S.include = false; S.q = null; showScreen("start"); });
+window.addEventListener("resize", drawOverlay);
+document.addEventListener("keydown", function (e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  var tag = (e.target.tagName || "").toLowerCase(), typing = tag === "input" || tag === "textarea";
+  if (S.screen === "question" && !$("correction").hidden) {
+    if (e.key === "Enter" && !(tag === "button" || e.target.getAttribute("role") === "button") && !(tag === "textarea" && e.shiftKey)) { e.preventDefault(); confirmCorrection(); }
+    else if (e.key === "Escape") leaveCorrection();
+  }
+  if (typing) return;
+  if (e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+  else if (S.screen === "question" && /^[1-9]$/.test(e.key)) choose(Number(e.key) - 1);
+});
+
+(async function init() {
+  var urlLang = new URLSearchParams(location.search).get("lang");
+  var lang = Logic.pickLang(urlLang, store("oc_lang"), navigator.language);
+  var name = store("oc_reviewer"), saved = store("oc_langs");
+  if (name) $("reviewer-input").value = name.slice(0, 40);
+  if (saved) { var set = saved.split(","); ["de", "fr", "it"].forEach(function (l) { $("flt-" + l).checked = set.indexOf(l) >= 0; }); }
+  try { await loadI18n(lang); } catch (e) { showBanner(e.message); }
+  showScreen("start");
+})();
+</script>
+</body>
+</html>

@@ -202,9 +202,17 @@ def export_schema_cmd(out: Path = typer.Option(Path("schema/affair.v0.1.json"), 
 def review(data_dir: Path = DATA,
            gold_dir: Optional[Path] = typer.Option(None, "--gold-dir", help="default <data-dir>/gold"),
            port: int = typer.Option(8765, "--port"), lang: str = typer.Option("de", "--lang", help="de, it or en"),
-           open_browser: bool = typer.Option(True, "--open/--no-open", help="open the browser")):
+           open_browser: bool = typer.Option(True, "--open/--no-open", help="open the browser"),
+           demo: bool = typer.Option(False, "--demo", help="try the tool on a tiny built-in demo (2 affairs) in "
+                                     "<data-dir>/demo; rebuilt fresh on every start, your real gold files are untouched")):
     """Start the local gold-review web app (127.0.0.1 only). Reviewer name and language filter are set in the page."""
+    import shutil
     from openparl_extract.review.app import serve
+    if demo:
+        from openparl_extract.review.demo import build_demo
+        data_dir = data_dir / "demo"
+        shutil.rmtree(data_dir, ignore_errors=True)
+        gold_dir = build_demo(data_dir)
     gold_dir = gold_dir or data_dir / "gold"
     if not gold_dir.is_dir() or not any(gold_dir.glob("*.json")):
         raise _fail(f"no gold files in {gold_dir}. Run `pick-corpus`, `ingest --corpus`, the pipeline (`run-all`) "
