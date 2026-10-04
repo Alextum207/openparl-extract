@@ -23,3 +23,17 @@ class MockLLMClient:
             return {}
         self.calls.append((group, model))
         return copy.deepcopy(self.fixtures.get(group, {}))
+
+
+def load_client(config, *, mock: bool = False, mock_fixtures: dict | None = None) -> LLMClient:
+    """MockLLMClient for --mock / LLM_BACKEND=mock, else the Apertus integration's ApertusClient."""
+    if mock or config.llm_backend == "mock":
+        return MockLLMClient(mock_fixtures or {})
+    try:
+        from openparl_extract.extract.apertus_client import ApertusClient
+    except ModuleNotFoundError as e:
+        if e.name != "openparl_extract.extract.apertus_client":
+            raise
+        raise RuntimeError("The Apertus client is provided by the Apertus integration "
+                           "(see docs/apertus_integration.md); use --mock until it is available") from None
+    return ApertusClient(base_url=config.llm_base_url, api_key=config.llm_api_key, model=config.llm_model)
