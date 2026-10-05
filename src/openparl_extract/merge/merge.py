@@ -13,6 +13,7 @@ from openparl_extract.merge.mapping import (
     AUTHOR_COSIGNER_RE,
     AUTHOR_SUBMITTER_RE,
     BODY_TYPE_TO_LEVEL,
+    EVENT_LABEL_TO_PROCEDURAL_STATE,
     EVENT_TO_PROCEDURAL_STATE,
     HARMONIZED_TYPE_TO_AFFAIR_TYPE,
     PERSON_ROLE_TO_ACTOR_ROLE,
@@ -142,6 +143,8 @@ def _history(a: dict, lang: str, flags: list[str]) -> list[ProceduralEvent]:
     for e in sorted((a.get("events") or {}).get("data", []), key=lambda e: e.get("date") or ""):
         label = pick(e.get("title"), lang) or pick(e.get("title_harmonized"), lang)
         state = EVENT_TO_PROCEDURAL_STATE.get(e.get("title_harmonized_id"))
+        if state is None and e.get("title_harmonized_id") is None and label:
+            state = EVENT_LABEL_TO_PROCEDURAL_STATE.get(label.casefold())
         if state is None:
             flags.append(f"unmapped_event:{label}")
             continue

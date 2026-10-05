@@ -50,6 +50,13 @@ EVENT_TO_PROCEDURAL_STATE: dict[int, ProceduralState] = {
     40: ProceduralState.withdrawn,   # Zurueckgezogen
 }
 
+# Fallback for events without title_harmonized_id (all federal events): verbatim label, lower-case, de/fr/it as observed
+# in the same events' title dict (CHE sample, 2026-10-05). Only labels whose German form equals a mapped id above.
+EVENT_LABEL_TO_PROCEDURAL_STATE: dict[str, ProceduralState] = {
+    "eingereicht": ProceduralState.submitted, "déposé": ProceduralState.submitted, "depositato": ProceduralState.submitted,
+    "erledigt": ProceduralState.decided, "liquidé": ProceduralState.decided, "liquidato": ProceduralState.decided,
+}
+
 # bodies[].type; "country" is only federal for CHE (the body list also holds ~248 foreign countries)
 BODY_TYPE_TO_LEVEL: dict[str, Level] = {
     "country": Level.federal,

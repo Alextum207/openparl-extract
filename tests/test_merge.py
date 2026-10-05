@@ -74,15 +74,25 @@ def test_italian_question_language_from_title(tmp_path):
     assert any(a.role.value == "submitter" and a.name.value == "Matteo Quadranti" for a in af.actors)
 
 
-def test_federal_level_and_begin_date_submitted_when_event_unmapped(tmp_path):
+def test_federal_level_event_mapped_by_verbatim_label(tmp_path):
+    # federal events have title_harmonized_id=null; the verbatim fr/it/de label "Deposé/Depositato/Eingereicht" is evidence enough
     af = merge("che_interpellation_340788", tmp_path)
     assert af.source.level == "federal" and af.source.language == "fr" and af.source.parliament == "Suisse"
-    assert [(e.state.value, e.event.value) for e in af.procedural_history] == [("submitted", "begin_date")]
-    assert af.procedural_history[0].date.value == date(2026, 10, 2)
-    assert "unmapped_event:Depositato" in af.review_flags or "unmapped_event:Déposé" in af.review_flags
+    assert [(e.state.value, e.event.value) for e in af.procedural_history] == [("submitted", "Déposé")]
+    assert af.procedural_history[0].date.status == "from_metadata"
+    assert not any(f.startswith("unmapped_event") for f in af.review_flags)
     assert "unmapped_role:Council Initial" in af.review_flags
     assert af.review_flags.count("no_document") == 1 and "no_document" in af.review_flags
     assert af.source.document_url is None and af.source.pdf_sha256 is None
+
+
+def test_begin_date_submitted_when_no_event_mappable(tmp_path):
+    a = load("che_interpellation_340788")
+    a["events"]["data"][0]["title"] = {"de": "Zustimmung"}  # no evidence-backed state
+    m = manifest_of(a, tmp_path)
+    af = merge_affair(a, m, body=BODIES[a["body_key"]], parsed=None, segments=None, verified=None)
+    assert [(e.state.value, e.event.value) for e in af.procedural_history] == [("submitted", "begin_date")]
+    assert "unmapped_event:Zustimmung" in af.review_flags
 
 
 def test_unmapped_type_is_other_with_label(tmp_path):
@@ -276,7 +286,10 @@ def test_single_language_no_flag(tmp_path):
 
 def test_answered_not_logged_when_metadata_has_no_mapped_events(tmp_path):
     log = tmp_path / "d.jsonl"
-    af = merge("che_interpellation_340788", tmp_path, verified=answer_verified(), disagreement_log=log)
+    a = load("che_interpellation_340788")
+    a["events"] = None  # no events at all: absence of "answered" is no evidence, only the synthesized begin_date remains
+    af = merge_affair(a, manifest_of(a, tmp_path), body=BODIES[a["body_key"]], parsed=None, segments=None,
+                      verified=answer_verified(), disagreement_log=log)
     assert not log.exists() and "disagreement:answered" not in af.review_flags
 
 
