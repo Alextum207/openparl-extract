@@ -9,7 +9,15 @@ from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.pdfgen import canvas
 
 from openparl_extract.evaluate.gold import prefill_gold
-from openparl_extract.models import (Affair, Answer, Decision, Provenance, Question, Source, Value)
+from openparl_extract.models import (
+    Affair,
+    Answer,
+    Decision,
+    Provenance,
+    Question,
+    Source,
+    Value,
+)
 from openparl_extract.parse.blocks import Block, ParsedDoc, save_parsed
 
 PAGE_H, PAGE_W = 841.89, 595.28  # A4 in points (reportlab default)

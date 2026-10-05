@@ -8,7 +8,6 @@ import pypdfium2 as pdfium
 
 from openparl_extract.parse.blocks import ParsedDoc
 
-
 # ponytail: serialised rendering; pypdfium2 is not thread-safe. Per-document pools if throughput matters.
 _PDFIUM = threading.Lock()
 

@@ -9,7 +9,7 @@ from openparl_extract.ingest.store import load_manifest, save_affair
 from openparl_extract.merge.merge import merge_affair
 from openparl_extract.models import Affair, Decision, DecisionOutcome, Provenance, Value
 from openparl_extract.parse.blocks import Block, ParsedDoc
-from openparl_extract.segment.rules import SegmentResult, segment
+from openparl_extract.segment.rules import segment
 from openparl_extract.verify.verify import VerifiedParts
 
 FIX = Path(__file__).parent / "fixtures"
@@ -33,7 +33,7 @@ def merge(name, tmp_path, body_key=None, **kw):
 
 
 def empty_verified(**kw):
-    nf = lambda: Value(status="not_found")  # noqa: E731
+    nf = lambda: Value(status="not_found")
     base = dict(affair_text=nf(), justification=nf(), executive_reasoning=nf(), questions=[], answers=[],
                 decision=None, review_flags=[], prompt_versions={})
     return VerifiedParts(**{**base, **kw})
@@ -227,8 +227,8 @@ def test_result_roundtrips_schema(name, tmp_path):
 
 
 # ---- fix round 1 ----
-from openparl_extract.merge.language import detect_language  # noqa: E402
-from openparl_extract.models import Answer  # noqa: E402
+from openparl_extract.merge.language import detect_language
+from openparl_extract.models import Answer
 
 DE = "Der Regierungsrat ist der Ansicht, dass die Frage nicht mit dem Gesetz und der Verordnung vereinbar ist. " * 3
 FR = "Le Conseil d'Etat est d'avis que la question n'est pas dans le cadre de la loi et que les droits sont une chose. " * 3

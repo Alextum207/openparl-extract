@@ -5,12 +5,46 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from openparl_extract.evaluate.gold import GoldDoc, GoldEntry, entries_for_affair, load_gold, save_gold
-from openparl_extract.evaluate.matrix import Thresholds, build_matrix, classify, matrix_wide, write_matrix
-from openparl_extract.evaluate.metrics import (aggregate_provenance, field_metrics, flag_rates, group_metrics,
-                                               load_outputs, provenance_validity, values_match, write_report)
-from openparl_extract.extract.schemas import ExtractedItem, ExtractedQuestion, ExtractionResult
-from openparl_extract.models import (Actor, Affair, Answer, Decision, Provenance, Question, Reference, Source, Value)
+from openparl_extract.evaluate.gold import (
+    GoldDoc,
+    GoldEntry,
+    entries_for_affair,
+    load_gold,
+    save_gold,
+)
+from openparl_extract.evaluate.matrix import (
+    Thresholds,
+    build_matrix,
+    classify,
+    matrix_wide,
+    write_matrix,
+)
+from openparl_extract.evaluate.metrics import (
+    aggregate_provenance,
+    field_metrics,
+    flag_rates,
+    group_metrics,
+    load_outputs,
+    provenance_validity,
+    values_match,
+    write_report,
+)
+from openparl_extract.extract.schemas import (
+    ExtractedItem,
+    ExtractedQuestion,
+    ExtractionResult,
+)
+from openparl_extract.models import (
+    Actor,
+    Affair,
+    Answer,
+    Decision,
+    Provenance,
+    Question,
+    Reference,
+    Source,
+    Value,
+)
 from openparl_extract.parse.blocks import Block
 from openparl_extract.verify.verify import verify
 

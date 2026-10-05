@@ -23,7 +23,7 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from openparl_extract.models import AffairType, Affair, Language, Level
+from openparl_extract.models import Affair, AffairType, Language, Level
 
 Verdict = Literal["correct", "wrong", "not_in_document", "unsure", "unreviewed"]
 SINGLE_FIELDS = ("affair_text", "justification", "executive_reasoning", "addressed_body",

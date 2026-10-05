@@ -3,7 +3,7 @@ import json
 import os
 import re
 import threading
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -40,7 +40,7 @@ class DocSummary(BaseModel):
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+    return datetime.now(UTC).isoformat(timespec="seconds")
 
 
 class GoldStore:

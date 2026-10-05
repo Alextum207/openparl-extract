@@ -142,7 +142,9 @@ def _parse(data, key, out, **_):
     pdf = next((d["pdf_file"] for d in m["docs"] if d["doc_id"] == m["primary_doc_id"]), None)
     if not pdf:
         return False  # no_document / no_pdf: nothing to parse, merge emits a metadata-only Affair
-    from openparl_extract.parse.docling_parse import parse_pdf  # heavy import, only when needed
+    from openparl_extract.parse.docling_parse import (
+        parse_pdf,  # heavy import, only when needed
+    )
     doc = parse_pdf(raw / pdf)
     out.parent.mkdir(parents=True, exist_ok=True)
     save_parsed(doc, out)

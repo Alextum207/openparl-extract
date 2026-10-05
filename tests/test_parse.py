@@ -3,7 +3,13 @@ from pathlib import Path
 
 import pytest
 
-from openparl_extract.parse.blocks import Block, ParsedDoc, load_parsed, save_parsed, strip_running_headers_footers
+from openparl_extract.parse.blocks import (
+    Block,
+    ParsedDoc,
+    load_parsed,
+    save_parsed,
+    strip_running_headers_footers,
+)
 
 H = 842.0  # page height; bbox = (x0, top, x1, bottom), top-left origin
 
@@ -85,6 +91,7 @@ def test_parse_pdf_born_digital(tmp_path):
 
 def test_parse_pdf_no_text_layer(tmp_path):
     from reportlab.pdfgen import canvas
+
     from openparl_extract.parse.docling_parse import parse_pdf
     pdf = tmp_path / "s.pdf"
     c = canvas.Canvas(str(pdf))
@@ -102,6 +109,7 @@ def _boom(*a, **k):
 
 def test_scanned_conversion_failure_flagged(tmp_path, monkeypatch):
     from reportlab.pdfgen import canvas
+
     from openparl_extract.parse import docling_parse
     pdf = tmp_path / "s.pdf"
     c = canvas.Canvas(str(pdf)); c.rect(10, 10, 50, 50); c.save()

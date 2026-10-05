@@ -9,10 +9,17 @@ from pydantic import BaseModel
 from rapidfuzz import fuzz
 
 from openparl_extract.extract.schemas import ExtractedItem, ExtractionResult
-from openparl_extract.models import Answer, Decision, DecisionOutcome, Provenance, Question, Value
+from openparl_extract.models import (
+    Answer,
+    Decision,
+    DecisionOutcome,
+    Provenance,
+    Question,
+    Value,
+)
 from openparl_extract.parse.blocks import Block
 
-_TOKEN = re.compile(r"­|-[ \t]*\r?\n\s*|\s+|.", re.S)  # soft hyphen | hyphen+newline join | whitespace run | char
+_TOKEN = re.compile(r"­|-[ \t]*\r?\n\s*|\s+|.", re.DOTALL)  # soft hyphen | hyphen+newline join | whitespace run | char
 _APOS = {"’": "'", "‘": "'", "ʼ": "'"}
 _DATE_IN_TEXT = re.compile(r"\d{4}-\d{1,2}-\d{1,2}|\d{1,2}\.\d{1,2}\.\d{4}")
 

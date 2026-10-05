@@ -4,7 +4,10 @@ from pydantic import TypeAdapter, ValidationError
 from openparl_extract.extract.llm_client import LLMClient
 from openparl_extract.extract.prompts import load_prompt
 from openparl_extract.extract.schemas import (
-    FIELD_GROUPS, ExtractedDecision, ExtractedItem, ExtractionResult, group_schema)
+    ExtractedDecision,
+    ExtractionResult,
+    group_schema,
+)
 from openparl_extract.parse.blocks import Block
 from openparl_extract.segment.rules import SegmentResult, section_blocks
 

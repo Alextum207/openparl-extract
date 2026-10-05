@@ -2,10 +2,10 @@
 import re
 
 STOPWORDS = {
-    "de": "der die das und ist nicht mit von zu den dem ein eine auf für dass wird sich".split(),
-    "fr": "le la les et est de du des un une que qui dans pour pas au sur en ce".split(),
-    "it": "il lo la gli le e è di del della dei un una che per non con nel sono si".split(),
-    "rm": "il la ed è da en che per cun na ün ils las dal sco ina".split(),
+    "de": ["der", "die", "das", "und", "ist", "nicht", "mit", "von", "zu", "den", "dem", "ein", "eine", "auf", "für", "dass", "wird", "sich"],
+    "fr": ["le", "la", "les", "et", "est", "de", "du", "des", "un", "une", "que", "qui", "dans", "pour", "pas", "au", "sur", "en", "ce"],
+    "it": ["il", "lo", "la", "gli", "le", "e", "è", "di", "del", "della", "dei", "un", "una", "che", "per", "non", "con", "nel", "sono", "si"],
+    "rm": ["il", "la", "ed", "è", "da", "en", "che", "per", "cun", "na", "ün", "ils", "las", "dal", "sco", "ina"],
 }
 MIN_HITS, MIN_RATIO = 10, 1.5
 

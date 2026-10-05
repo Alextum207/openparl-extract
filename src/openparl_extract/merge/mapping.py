@@ -31,9 +31,9 @@ PERSON_ROLE_TO_ACTOR_ROLE: dict[str, ActorRole] = {
 # verbatim contributors[].role of harmonized "Author" entries that are co-signers, not first submitters
 # cosignataire / cofirmatario are plain French / Italian-singular translations of evidenced terms (Mitunterzeichner, Cofirmatari)
 AUTHOR_COSIGNER_RE = re.compile(r"mitunterzeichn|zweitunterzeichn|drittunterzeichn|cofirmatar|mitvorst\w*ss|miteinreich"
-                                r"|cosignatair", re.I)
+                                r"|cosignatair", re.IGNORECASE)
 # verbatim roles of harmonized "Author" that are evidenced first submitters; anything else is ambiguous
-AUTHOR_SUBMITTER_RE = re.compile(r"erstunterzeichn|urheber|presentat|auteur|hauptvorst\w*ss", re.I)
+AUTHOR_SUBMITTER_RE = re.compile(r"erstunterzeichn|urheber|presentat|auteur|hauptvorst\w*ss", re.IGNORECASE)
 
 # events[].title_harmonized_id. Ids without clear evidence (24 Agenda, 29/32/76 proposals, 47, 67) are skipped + flagged.
 EVENT_TO_PROCEDURAL_STATE: dict[int, ProceduralState] = {

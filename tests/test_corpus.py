@@ -3,8 +3,14 @@ import json
 
 import httpx
 
-from openparl_extract.evaluate.corpus import (CorpusEntry, choose_doc, format_summary, load_corpus, pick_corpus,
-                                              write_corpus)
+from openparl_extract.evaluate.corpus import (
+    CorpusEntry,
+    choose_doc,
+    format_summary,
+    load_corpus,
+    pick_corpus,
+    write_corpus,
+)
 from openparl_extract.ingest.api import OpenParlDataClient
 
 
@@ -169,6 +175,7 @@ def test_ingest_primary_doc_first_pdf_and_default(tmp_path):
 
 def test_ingest_primary_doc_wrong_id(tmp_path):
     import pytest
+
     from openparl_extract.ingest.store import ingest_affair
     for bad in (3, 99):  # html doc, unknown doc
         with pytest.raises(ValueError):

@@ -163,14 +163,14 @@ assert.deepStrictEqual(L.progressNumbers({{questions_done: 5, questions_total: 5
 @pytest.mark.skipif(shutil.which("node") is None, reason="node not installed")
 def test_inline_script_parses(tmp_path):
     js = tmp_path / "inline.js"
-    js.write_text(re.findall(r"<script>(.*?)</script>", HTML, re.S)[0], encoding="utf-8")
+    js.write_text(re.findall(r"<script>(.*?)</script>", HTML, re.DOTALL)[0], encoding="utf-8")
     r = subprocess.run(["node", "--check", str(js)], capture_output=True, text=True)
     assert r.returncode == 0, r.stderr
 
 
 # ---------- fix round 1: review findings ----------
 def _func(name):
-    m = re.search(r"function " + name + r"\(.*?\n\}\n", HTML, re.S)
+    m = re.search(r"function " + name + r"\(.*?\n\}\n", HTML, re.DOTALL)
     assert m, name
     return m.group(0)
 
@@ -211,7 +211,7 @@ def test_setlang_and_loadquestion_guard_in_flight_requests():
 
 
 def test_narrow_header_not_sticky():
-    assert re.search(r"@media \(max-width: 900px\)[^@]*header\s*\{[^}]*position:\s*static", HTML, re.S)
+    assert re.search(r"@media \(max-width: 900px\)[^@]*header\s*\{[^}]*position:\s*static", HTML, re.DOTALL)
 
 
 def test_new_i18n_keys_all_languages():

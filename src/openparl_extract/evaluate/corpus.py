@@ -13,7 +13,10 @@ from pydantic import BaseModel
 
 from openparl_extract.ingest.api import OpenParlDataClient
 from openparl_extract.merge.language import detect_language
-from openparl_extract.merge.mapping import BODY_TYPE_TO_LEVEL, HARMONIZED_TYPE_TO_AFFAIR_TYPE
+from openparl_extract.merge.mapping import (
+    BODY_TYPE_TO_LEVEL,
+    HARMONIZED_TYPE_TO_AFFAIR_TYPE,
+)
 from openparl_extract.merge.merge import LANG_ORDER, pick
 from openparl_extract.models import AffairType, Level
 from openparl_extract.segment.patterns import PATTERNS

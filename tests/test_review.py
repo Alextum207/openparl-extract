@@ -10,7 +10,15 @@ from reportlab.pdfgen import canvas
 
 from openparl_extract.evaluate.gold import GoldDoc, GoldEntry, load_gold, prefill_gold
 from openparl_extract.evaluate.metrics import field_metrics
-from openparl_extract.models import (Affair, Answer, Decision, Provenance, Question, Source, Value)
+from openparl_extract.models import (
+    Affair,
+    Answer,
+    Decision,
+    Provenance,
+    Question,
+    Source,
+    Value,
+)
 from openparl_extract.parse.blocks import Block, ParsedDoc
 from openparl_extract.review.app import make_server
 from openparl_extract.review.i18n import LANGS, STRINGS, t
@@ -517,9 +525,9 @@ def test_unknown_block_skipped_without_parsed(server, env):
 
 def test_clean_reviewer():
     from openparl_extract.review.app import ApiError, clean_reviewer
-    assert clean_reviewer("  Anna‮​ ") == "Anna"
+    assert clean_reviewer("  Anna‮\u200b ") == "Anna"
     assert clean_reviewer("Bo⁦b") == "Bob"
-    for bad in ("‮​", "   ", None):
+    for bad in ("‮\u200b", "   ", None):
         with pytest.raises(ApiError):
             clean_reviewer(bad)
 
@@ -538,6 +546,7 @@ def test_cli_registered_before_main_guard():
 
 def test_cli_review_needs_gold(tmp_path):
     from typer.testing import CliRunner
+
     from openparl_extract.cli import app
     r = CliRunner().invoke(app, ["review", "--data-dir", str(tmp_path), "--no-open"])
     assert r.exit_code == 1 and "gold-prefill" in r.output and "pick-corpus" in r.output

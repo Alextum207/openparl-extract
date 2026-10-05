@@ -5,7 +5,11 @@ from pathlib import Path
 import truststore
 from pypdf import PdfReader
 
-from openparl_extract.parse.blocks import Block, ParsedDoc, strip_running_headers_footers
+from openparl_extract.parse.blocks import (
+    Block,
+    ParsedDoc,
+    strip_running_headers_footers,
+)
 
 SCANNED_CHARS_PER_PAGE = 50  # avg extractable chars/page below this => treated as scanned
 _TYPES = {"section_header": "heading", "title": "heading", "text": "paragraph", "paragraph": "paragraph",

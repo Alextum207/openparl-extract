@@ -1,18 +1,27 @@
 """openparl-extract CLI: thin typer wrappers around pipeline.py. Every stage reads/writes JSON under --data-dir."""
 import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 
 from openparl_extract import pipeline as pl
 from openparl_extract.config import Config, load_config
+from openparl_extract.evaluate.corpus import (
+    format_summary,
+    load_corpus,
+    pick_corpus,
+    write_corpus,
+)
 from openparl_extract.evaluate.demo import days_to_answer
-from openparl_extract.evaluate.corpus import format_summary, load_corpus, pick_corpus, write_corpus
 from openparl_extract.evaluate.gold import load_gold
 from openparl_extract.evaluate.matrix import write_matrix
-from openparl_extract.evaluate.metrics import (ProvenanceStats, aggregate_provenance, load_outputs,
-                                               provenance_validity, write_report)
+from openparl_extract.evaluate.metrics import (
+    ProvenanceStats,
+    aggregate_provenance,
+    load_outputs,
+    provenance_validity,
+    write_report,
+)
 from openparl_extract.extract.llm_client import load_client
 from openparl_extract.extract.schemas import ExtractionResult
 from openparl_extract.ingest.api import OpenParlDataClient
@@ -58,7 +67,7 @@ def _run(data, stage, ids, body_key, all_, force, **kw) -> pl.Summary:
 
 
 def _stage(stage: str):
-    def cmd(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Option(None, "--body-key"),
+    def cmd(ids: list[str] | None = IDS, body_key: str | None = typer.Option(None, "--body-key"),
             all_: bool = typer.Option(False, "--all"), force: bool = typer.Option(False, "--force"),
             data_dir: Path = DATA):
         _run(data_dir, stage, ids, body_key, all_, force)
@@ -70,7 +79,7 @@ for _s in ("parse", "segment", "verify", "merge"):
     _stage(_s)
 
 
-def _client(mock: bool, fixtures: Optional[Path]):
+def _client(mock: bool, fixtures: Path | None):
     try:
         fx = json.loads(fixtures.read_text(encoding="utf-8")) if fixtures else None
         return load_client(load_config(), mock=mock or fx is not None, mock_fixtures=fx)
@@ -79,10 +88,10 @@ def _client(mock: bool, fixtures: Optional[Path]):
 
 
 @app.command()
-def ingest(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Option(None, "--body-key"),
-           limit: Optional[int] = typer.Option(None, "--limit", help="default 10 (all corpus entries with --corpus)"),
+def ingest(ids: list[str] | None = IDS, body_key: str | None = typer.Option(None, "--body-key"),
+           limit: int | None = typer.Option(None, "--limit", help="default 10 (all corpus entries with --corpus)"),
            offset: int = typer.Option(0, "--offset"), force: bool = typer.Option(False, "--force"),
-           corpus: Optional[Path] = typer.Option(None, "--corpus", help="corpus.json from pick-corpus"),
+           corpus: Path | None = typer.Option(None, "--corpus", help="corpus.json from pick-corpus"),
            data_dir: Path = DATA):
     """Fetch affairs (explicit ids, a body_key listing, or a --corpus file) into data/raw."""
     if corpus:
@@ -108,10 +117,10 @@ FIXTURES = typer.Option(None, "--mock-fixtures", help='JSON {group: payload} for
 
 
 @app.command()
-def extract(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Option(None, "--body-key"),
+def extract(ids: list[str] | None = IDS, body_key: str | None = typer.Option(None, "--body-key"),
             all_: bool = typer.Option(False, "--all"), force: bool = typer.Option(False, "--force"),
-            mock: bool = MOCK, mock_fixtures: Optional[Path] = FIXTURES,
-            model: Optional[str] = typer.Option(None, "--model", help="default: LLM_MODEL"),
+            mock: bool = MOCK, mock_fixtures: Path | None = FIXTURES,
+            model: str | None = typer.Option(None, "--model", help="default: LLM_MODEL"),
             max_chars: int = typer.Option(12000, "--max-chars"), data_dir: Path = DATA):
     """Run the LLM extraction per field group."""
     _run(data_dir, "extract", ids, body_key, all_, force, client=_client(mock, mock_fixtures),
@@ -119,10 +128,10 @@ def extract(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Opti
 
 
 @app.command("run-all")
-def run_all(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Option(None, "--body-key"),
+def run_all(ids: list[str] | None = IDS, body_key: str | None = typer.Option(None, "--body-key"),
             limit: int = typer.Option(10, "--limit"), force: bool = typer.Option(False, "--force"),
             skip_ingest: bool = typer.Option(False, "--skip-ingest"), mock: bool = MOCK,
-            mock_fixtures: Optional[Path] = FIXTURES, model: Optional[str] = typer.Option(None, "--model"),
+            mock_fixtures: Path | None = FIXTURES, model: str | None = typer.Option(None, "--model"),
             max_chars: int = typer.Option(12000, "--max-chars"), data_dir: Path = DATA):
     """ingest (unless --skip-ingest or already in data/raw) then every stage, per affair."""
     if not (ids or body_key):
@@ -148,8 +157,8 @@ def run_all(ids: Optional[list[str]] = IDS, body_key: Optional[str] = typer.Opti
 
 
 @app.command()
-def evaluate(data_dir: Path = DATA, gold_dir: Optional[Path] = typer.Option(None, "--gold-dir", help="default <data-dir>/gold"),
-             out: Optional[Path] = typer.Option(None, "--out", help="default data/reports")):
+def evaluate(data_dir: Path = DATA, gold_dir: Path | None = typer.Option(None, "--gold-dir", help="default <data-dir>/gold"),
+             out: Path | None = typer.Option(None, "--out", help="default data/reports")):
     """Metrics report and feasibility matrix for data/output against the gold set (may be empty)."""
     gold_dir, out = gold_dir or data_dir / "gold", out or Path("data/reports")
     out_dir = data_dir / "output"
@@ -165,7 +174,7 @@ def evaluate(data_dir: Path = DATA, gold_dir: Optional[Path] = typer.Option(None
     write_report(out, affairs, gold, aggregate_provenance(stats) if stats else ProvenanceStats())
     write_matrix(out, affairs, gold)
     a = json.loads((out / "metrics.json").read_text(encoding="utf-8")).get("_all", {})
-    f = lambda k: "n/a" if a.get(k) is None else f"{a[k]:.2f}"  # noqa: E731
+    f = lambda k: "n/a" if a.get(k) is None else f"{a[k]:.2f}"
     typer.echo(f"evaluate: {len(affairs)} affairs, {len(gold)} gold docs; precision={f('precision')} "
                f"recall={f('recall')} hallucination_rate={f('hallucination_rate')}")
     typer.echo(f"feasibility matrix: {out / 'feasibility_matrix.md'}")
@@ -191,7 +200,7 @@ def pick_corpus_cmd(n: int = typer.Option(45, "--n"), seed: int = typer.Option(7
 
 @app.command("gold-prefill")
 def gold_prefill(data_dir: Path = DATA,
-                 gold_dir: Optional[Path] = typer.Option(None, "--gold-dir", help="default <data-dir>/gold")):
+                 gold_dir: Path | None = typer.Option(None, "--gold-dir", help="default <data-dir>/gold")):
     """Draft gold files from data/output; existing entries (reviewed ones too) are never overwritten."""
     c = pl.prefill_all(data_dir, gold_dir or data_dir / "gold")
     typer.echo(f"gold-prefill: {c['created']} created, {c['extended']} extended, {c['unchanged']} untouched")
@@ -208,13 +217,14 @@ def export_schema_cmd(out: Path = typer.Option(Path("schema/affair.v0.1.json"), 
 
 @app.command()
 def review(data_dir: Path = DATA,
-           gold_dir: Optional[Path] = typer.Option(None, "--gold-dir", help="default <data-dir>/gold"),
+           gold_dir: Path | None = typer.Option(None, "--gold-dir", help="default <data-dir>/gold"),
            port: int = typer.Option(8765, "--port"), lang: str = typer.Option("de", "--lang", help="de, it or en"),
            open_browser: bool = typer.Option(True, "--open/--no-open", help="open the browser"),
            demo: bool = typer.Option(False, "--demo", help="try the tool on a tiny built-in demo (2 affairs) in "
                                      "<data-dir>/demo; rebuilt fresh on every start, your real gold files are untouched")):
     """Start the local gold-review web app (127.0.0.1 only). Reviewer name and language filter are set in the page."""
     import shutil
+
     from openparl_extract.review.app import serve
     if demo:
         from openparl_extract.review.demo import build_demo

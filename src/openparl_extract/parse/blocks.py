@@ -11,7 +11,7 @@ EDGE = 0.10  # top/bottom fraction of page considered header/footer zone
 SHORT = 20  # max chars for the pattern rule when bbox is unknown
 
 _PAGENUM = re.compile(
-    r"^[-–—\s]*(?:(?:seite|page|pagina|p\.|s\.)\s*)?\d+\s*(?:(?:/|von|sur|di|of)\s*\d+)?[-–—\s]*$", re.I)
+    r"^[-–—\s]*(?:(?:seite|page|pagina|p\.|s\.)\s*)?\d+\s*(?:(?:/|von|sur|di|of)\s*\d+)?[-–—\s]*$", re.IGNORECASE)
 
 
 class Block(BaseModel):

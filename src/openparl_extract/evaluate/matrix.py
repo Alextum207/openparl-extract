@@ -7,14 +7,21 @@ IMPORTANT: the classification thresholds are configuration, not truth; change `T
 `consistent*` / `partial*` (asterisk, `verified=False`) is AVAILABILITY-ONLY: the field is filled in, but no gold
 evidence says the values are right. Only cells without an asterisk are backed by gold F1.
 """
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Literal
+from typing import Literal
 
 import pandas as pd
 
 from openparl_extract.evaluate.gold import GoldDoc
-from openparl_extract.evaluate.metrics import FLAG_FAMILIES, body_id, _collect, _compute, flag_rates
+from openparl_extract.evaluate.metrics import (
+    FLAG_FAMILIES,
+    _collect,
+    _compute,
+    body_id,
+    flag_rates,
+)
 from openparl_extract.models import Affair
 
 Classification = Literal["consistent", "partial", "not_representable", "insufficient_data"]

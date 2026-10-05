@@ -9,10 +9,28 @@ from datetime import date, datetime
 from pathlib import Path
 
 from openparl_extract.merge.language import detect_language
-from openparl_extract.merge.mapping import (AUTHOR_COSIGNER_RE, AUTHOR_SUBMITTER_RE, BODY_TYPE_TO_LEVEL, EVENT_TO_PROCEDURAL_STATE,
-                                            HARMONIZED_TYPE_TO_AFFAIR_TYPE, PERSON_ROLE_TO_ACTOR_ROLE)
-from openparl_extract.models import (Actor, ActorRole, Affair, AffairType, Language, Level, ProceduralEvent,
-                                     ProceduralState, Provenance, Reference, Source, Value)
+from openparl_extract.merge.mapping import (
+    AUTHOR_COSIGNER_RE,
+    AUTHOR_SUBMITTER_RE,
+    BODY_TYPE_TO_LEVEL,
+    EVENT_TO_PROCEDURAL_STATE,
+    HARMONIZED_TYPE_TO_AFFAIR_TYPE,
+    PERSON_ROLE_TO_ACTOR_ROLE,
+)
+from openparl_extract.models import (
+    Actor,
+    ActorRole,
+    Affair,
+    AffairType,
+    Language,
+    Level,
+    ProceduralEvent,
+    ProceduralState,
+    Provenance,
+    Reference,
+    Source,
+    Value,
+)
 from openparl_extract.parse.blocks import Block, ParsedDoc
 from openparl_extract.segment.rules import SegmentResult
 from openparl_extract.verify.verify import VerifiedParts, check_date_order
@@ -137,7 +155,7 @@ def _history(a: dict, lang: str, flags: list[str]) -> list[ProceduralEvent]:
 def _refs(parsed: ParsedDoc | None, segments: SegmentResult | None):
     blocks: list[Block] = parsed.blocks if parsed else []
     annex_ids = set((segments.sections.get("annex") if segments else None) or [])
-    ref = lambda b, cap=None: Reference(page=b.page, caption=cap, block_id=b.id)  # noqa: E731
+    ref = lambda b, cap=None: Reference(page=b.page, caption=cap, block_id=b.id)
     return ([ref(b, b.text.strip()) for b in blocks if b.id in annex_ids and b.type == "heading"],
             [ref(b) for b in blocks if b.type == "table"], [ref(b) for b in blocks if b.type == "image"])
 

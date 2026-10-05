@@ -1,7 +1,12 @@
 from datetime import date
 
 from openparl_extract.extract.schemas import (
-    ExtractedAnswer, ExtractedDecision, ExtractedItem, ExtractedQuestion, ExtractionResult)
+    ExtractedAnswer,
+    ExtractedDecision,
+    ExtractedItem,
+    ExtractedQuestion,
+    ExtractionResult,
+)
 from openparl_extract.models import DecisionOutcome
 from openparl_extract.parse.blocks import Block
 from openparl_extract.verify.verify import check_date_order, locate, verify, verify_item

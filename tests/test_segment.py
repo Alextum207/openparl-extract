@@ -1,5 +1,10 @@
 from openparl_extract.parse.blocks import Block
-from openparl_extract.segment.rules import SECTIONS, SegmentResult, section_blocks, segment
+from openparl_extract.segment.rules import (
+    SECTIONS,
+    SegmentResult,
+    section_blocks,
+    segment,
+)
 
 
 def mk(*items):

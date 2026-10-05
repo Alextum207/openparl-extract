@@ -4,9 +4,18 @@ from datetime import date
 import pytest
 from pydantic import ValidationError
 
-from openparl_extract.extract.schemas import FIELD_GROUPS, ExtractionResult, group_schema
+from openparl_extract.extract.schemas import (
+    FIELD_GROUPS,
+    ExtractionResult,
+    group_schema,
+)
 from openparl_extract.models import (
-    Affair, AffairType, Provenance, Source, Value, export_schema,
+    Affair,
+    AffairType,
+    Provenance,
+    Source,
+    Value,
+    export_schema,
 )
 
 PROV = Provenance(page=1, block_id="p1_b0", quote="Frage")
