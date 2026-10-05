@@ -21,7 +21,12 @@ class SegmentResult(BaseModel):
     review_flags: list[str] = []
 
 
+# "A Wortlaut", "B Stellungnahme": one capital letter + a word of 2+ letters (never "A N F R A G E")
+_LETTER_ENUM = re.compile(r"^[A-Z]\s+(?=[^\W\d_]{2})")
+
+
 def normalise(text: str) -> str:
+    text = _LETTER_ENUM.sub("", text.lstrip())
     t = unicodedata.normalize("NFKD", text.casefold())
     t = "".join(c for c in t if not unicodedata.combining(c))
     t = t.replace("\u2019", "'").replace("\u00b4", "'").replace("\u2018", "'").replace("`", "'")

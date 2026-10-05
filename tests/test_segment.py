@@ -185,3 +185,14 @@ def test_bare_antwort_rules():
     assert sec(segment(mk("v", "Antwort auf Frage 1", "x")), "executive_answer") == ["p1_b1", "p1_b2"]
     assert sec(segment(mk("v", "Antwort des Regierungsrates zur Lage im Kanton und weiteres Vorgehen", "x")),
                "executive_answer") == ["p1_b1", "p1_b2"]
+
+
+def test_letter_enumerators_and_spaced_headings():
+    # Emmen: "A Wortlaut des Postulats" / "B Stellungnahme des Gemeinderates"
+    b = mk(("A Wortlaut des Postulats", "heading"), "Der Gemeinderat wird beauftragt ...",
+           ("B Stellungnahme des Gemeinderates", "heading"), "Der Gemeinderat beantragt ...")
+    r = segment(b)
+    assert "segmentation_failed" not in r.review_flags
+    assert sec(r, "executive_answer") == ["p1_b2", "p1_b3"]
+    # spaced capitals must still match as before (single letters are not enumerators)
+    assert segment(mk(("A N F R A G E", "heading"), "Text")).headings == [("p1_b0", "affair_text")]
