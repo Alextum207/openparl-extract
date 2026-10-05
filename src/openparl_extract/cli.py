@@ -7,6 +7,7 @@ import typer
 
 from openparl_extract import pipeline as pl
 from openparl_extract.config import Config, load_config
+from openparl_extract.evaluate.demo import days_to_answer
 from openparl_extract.evaluate.corpus import format_summary, load_corpus, pick_corpus, write_corpus
 from openparl_extract.evaluate.gold import load_gold
 from openparl_extract.evaluate.matrix import write_matrix
@@ -168,6 +169,13 @@ def evaluate(data_dir: Path = DATA, gold_dir: Optional[Path] = typer.Option(None
     typer.echo(f"evaluate: {len(affairs)} affairs, {len(gold)} gold docs; precision={f('precision')} "
                f"recall={f('recall')} hallucination_rate={f('hallucination_rate')}")
     typer.echo(f"feasibility matrix: {out / 'feasibility_matrix.md'}")
+
+
+@app.command()
+def demo(data_dir: Path = DATA, affair_type: str = typer.Option("interpellation", "--type")):
+    """Demo question: median days from submission to executive answer per parliament."""
+    df = days_to_answer(load_outputs(data_dir / "output"), affair_type)
+    typer.echo(df.to_string(index=False) if len(df) else f"no {affair_type} affairs in {data_dir / 'output'}")
 
 
 @app.command("pick-corpus")

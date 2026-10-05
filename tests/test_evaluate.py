@@ -296,3 +296,19 @@ def test_all_headline_numbers():
     assert (m.tp, m.fp, m.fn, m.tn) == (2, 2, 1, 2)
     assert m.f1 == pytest.approx(4 / 7) and m.hallucination_rate == pytest.approx(0.25)
     assert m.not_found_correctness == pytest.approx(2 / 3)
+
+
+def test_days_to_answer():
+    from openparl_extract.evaluate.demo import days_to_answer
+    from openparl_extract.models import ProceduralEvent
+
+    def ev(d, st):
+        return ProceduralEvent(date=Value(value=date.fromisoformat(d), status="from_metadata"),
+                               event=Value(value=st, status="from_metadata"), state=Value(value=st, status="from_metadata"))
+
+    a = mk("1", parl="ZH", procedural_history=[ev("2025-01-01", "submitted"), ev("2025-01-11", "answered")])
+    b = mk("2", parl="ZH", procedural_history=[ev("2025-01-01", "submitted")])
+    for x in (a, b):
+        x.affair_type = Value(value="interpellation", status="from_metadata")
+    r = days_to_answer([a, b]).iloc[0]
+    assert (r.n_affairs, r.n_with_both_dates, r.median_days) == (2, 1, 10)
