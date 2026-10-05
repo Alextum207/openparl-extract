@@ -25,6 +25,18 @@ openparl-extract evaluate                           # metrics + feasibility matr
 openparl-extract demo                               # median days submission -> answer per parliament
 ```
 
+## Run with Docker (as the judges do)
+
+```bash
+cp .env.example .env     # LLM_NAME, LLM_BASE_URL, LLM_API_KEY of an Apertus endpoint (OpenAI-compatible)
+make run                 # builds the image, runs the pipeline on 3 ZH affairs, then evaluate + demo
+make run BODY=BS LIMIT=5 # other parliament / more affairs
+make demo                # mock LLM, plumbing only, no endpoint needed (no quality claims)
+```
+
+Requirements: Docker, network access (OpenParlData API, first run downloads Docling models), an Apertus endpoint for real runs.
+A server on the host is reachable from the container as `http://host.docker.internal:8080/v1`. Output is written to `data/`.
+
 Real Apertus runs: see [docs/apertus_integration.md](docs/apertus_integration.md). The mock proves the plumbing only;
 no quality claim is made until the pipeline has run on real PDFs and the gold set.
 
@@ -34,7 +46,7 @@ no quality claim is made until the pipeline has run on real PDFs and the gold se
 - Mapping to Akoma Ntoso / Popolo / Parla-CLARIN / Docling: [docs/schema_mapping.md](docs/schema_mapping.md)
 - API metadata mapping: [docs/metadata_mapping.md](docs/metadata_mapping.md)
 - Gold review guides: [DE](docs/gold_review_anleitung.md), [IT](docs/gold_review_guida.md)
-- Technical report: [docs/technical_report.md](docs/technical_report.md)
+- Technical report: [technical_report.md](technical_report.md)
 
 ## License
 

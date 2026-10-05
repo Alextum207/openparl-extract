@@ -8,3 +8,21 @@ models/
 *.gguf
 TASKS.pdf
 data/demo/
+*.bin
+*.safetensors
+*.ckpt
+*.pt
+.env.*
+!.env.example
+.DS_Store
+.idea/
+.vscode/
+
+# intermediate stage output of local/mock runs (publish real results deliberately, not by accident)
+data/parsed/
+data/segmented/
+data/extracted/
+data/verified/
+data/output/
+data/reports/
+data/*.log

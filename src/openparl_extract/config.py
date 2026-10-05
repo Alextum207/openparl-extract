@@ -20,7 +20,7 @@ def load_config(env_file: str | None = ".env") -> Config:
     return Config(
         llm_base_url=e("LLM_BASE_URL", "http://localhost:8080/v1"),
         llm_api_key=e("LLM_API_KEY", "none"),
-        llm_model=e("LLM_MODEL", "apertus-8b"),
+        llm_model=e("LLM_NAME") or e("LLM_MODEL", "apertus-8b"),  # LLM_NAME: HackApertus template; LLM_MODEL: legacy
         api_base=e("API_BASE", "https://api.openparldata.ch"),
         llm_backend=e("LLM_BACKEND", "apertus"),
     )
