@@ -1,3 +1,4 @@
+# ruff: noqa: B008  (Thresholds is a frozen default config)
 """Feasibility matrix: schema field x (level | language | parliament) -> consistent / partial / not_representable.
 
 Availability = share of affairs in the column group whose field holds a usable value. F1 comes from the gold set

@@ -75,7 +75,7 @@ def extract_affair(segments: SegmentResult, blocks: list[Block], client: LLMClie
                       .replace("{blocks}", "\n".join(_line(b) for b in chunk)))
             try:
                 payload = client.extract(prompt, group_schema(group), model)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001  (any client failure is recorded per group, never raised)
                 result.errors.append(f"client_error:{group}:{type(e).__name__}")
                 continue
             if not isinstance(payload, dict):

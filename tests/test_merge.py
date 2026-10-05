@@ -34,8 +34,8 @@ def merge(name, tmp_path, body_key=None, **kw):
 
 def empty_verified(**kw):
     nf = lambda: Value(status="not_found")
-    base = dict(affair_text=nf(), justification=nf(), executive_reasoning=nf(), questions=[], answers=[],
-                decision=None, review_flags=[], prompt_versions={})
+    base = {"affair_text": nf(), "justification": nf(), "executive_reasoning": nf(), "questions": [], "answers": [],
+            "decision": None, "review_flags": [], "prompt_versions": {}}
     return VerifiedParts(**{**base, **kw})
 
 

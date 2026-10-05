@@ -156,7 +156,7 @@ assert.strictEqual(L.buttonLabel(0, 'Richtig'), '1  Richtig');
 assert.deepStrictEqual(L.progressNumbers({{questions_done: 5, questions_total: 5, docs_done: 1, docs_total: 2}}),
                        {{n: 5, total: 5, d: 2, docs: 2}});
 """
-    r = subprocess.run(["node", "-e", script], capture_output=True, text=True)
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=False)
     assert r.returncode == 0, r.stderr
 
 
@@ -164,7 +164,7 @@ assert.deepStrictEqual(L.progressNumbers({{questions_done: 5, questions_total: 5
 def test_inline_script_parses(tmp_path):
     js = tmp_path / "inline.js"
     js.write_text(re.findall(r"<script>(.*?)</script>", HTML, re.DOTALL)[0], encoding="utf-8")
-    r = subprocess.run(["node", "--check", str(js)], capture_output=True, text=True)
+    r = subprocess.run(["node", "--check", str(js)], capture_output=True, text=True, check=False)
     assert r.returncode == 0, r.stderr
 
 
@@ -231,7 +231,7 @@ def test_too_soon_in_node():
     script = f"const L = require({json.dumps(str(LOGIC))}); const a = require('assert');" \
              "a.strictEqual(L.tooSoon(1000, 1200), true); a.strictEqual(L.tooSoon(1000, 1500), false);" \
              "a.strictEqual(L.tooSoon(0, 5), false);"
-    r = subprocess.run(["node", "-e", script], capture_output=True, text=True)
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=False)
     assert r.returncode == 0, r.stderr
 
 
@@ -252,7 +252,7 @@ a.strictEqual(b('Enter', true, false), false);
 a.strictEqual(b('q', false, false), false);
 a.strictEqual(b('1', false, false, false), false);
 """
-    r = subprocess.run(["node", "-e", script], capture_output=True, text=True)
+    r = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=False)
     assert r.returncode == 0, r.stderr
 
 

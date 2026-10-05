@@ -183,7 +183,7 @@ def pick_corpus(client: OpenParlDataClient, n_total: int = 45, seed: int = 7, ma
         bodies = call(client.list_bodies)
     except _Budget:
         bodies = []
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001  (record and continue: one failing call never aborts the run)
         errors.append({"body_key": "*bodies*", "error": f"{type(e).__name__}: {e}"})
         bodies = []
     # only bodies the scraper indexes (live: `indexed`; missing flag = assume yes); level via BODY_TYPE_TO_LEVEL
@@ -255,7 +255,7 @@ def pick_corpus(client: OpenParlDataClient, n_total: int = 45, seed: int = 7, ma
                         break
             except _Budget:
                 raise
-            except Exception as e:  # a failing body never aborts the run
+            except Exception as e:  # noqa: BLE001  a failing body never aborts the run
                 errors.append({"body_key": key, "error": f"{type(e).__name__}: {e}"})
     except _Budget:
         state["budget_out"] = True
@@ -327,8 +327,8 @@ def format_summary(s: dict) -> str:
     def row(name, d):
         return f"  {name:<14}" + "  ".join(f"{k}={v}" for k, v in d.items())
 
-    lines = [f"corpus: {s.get('n', 0)} of {s.get('n_total')} entries, {s.get('requests', 0)} API requests "
-             f"(seed {s.get('seed')})",
+    lines = [(f"corpus: {s.get('n', 0)} of {s.get('n_total')} entries, {s.get('requests', 0)} API requests "
+              f"(seed {s.get('seed')})"),
              row("level", s.get("level", {})), row("language", s.get("language", {})),
              f"  {'scanned_guess':<14}{s.get('scanned_guess', 0)}", row("affair_type", s.get("affair_type", {})),
              f"  duplicates_skipped: {s.get('duplicates_skipped', 0)}", f"  unmet: {len(s.get('unmet', []))}"]

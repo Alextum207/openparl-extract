@@ -1,3 +1,5 @@
+# ruff: noqa: B008  (typer idiom: typer.Option/Argument as parameter defaults)
+# ruff: noqa: B008  (typer idiom: typer.Option/Argument as parameter defaults)
 """openparl-extract CLI: thin typer wrappers around pipeline.py. Every stage reads/writes JSON under --data-dir."""
 import json
 from pathlib import Path
@@ -147,7 +149,7 @@ def run_all(ids: list[str] | None = IDS, body_key: str | None = typer.Option(Non
         summaries.append(s)
         keys, missing = s.keys, []
     client = _client(mock, mock_fixtures)
-    kw = {"extract": dict(client=client, model=model or load_config().llm_model, max_chars=max_chars)}
+    kw = {"extract": {"client": client, "model": model or load_config().llm_model, "max_chars": max_chars}}
     summaries += [pl.run_stage(data_dir, st, keys, force, **kw.get(st, {})) for st in pl.STAGES]
     for s in summaries[len(summaries) - len(pl.STAGES):]:
         _echo(s)

@@ -155,7 +155,7 @@ def test_store_answer_persists_and_logs(env):
     e = s.apply_answer("ZH_100", "affair_text", "correct", "Anna")
     assert e.verdict == "correct" and e.reviewer == "Anna" and e.timestamp
     again = GoldStore(gold, data)
-    assert [x for x in again.get("ZH_100").entries if x.field == "affair_text"][0].verdict == "correct"
+    assert next(x for x in again.get("ZH_100").entries if x.field == "affair_text").verdict == "correct"
     assert not list(gold.glob("*.tmp")) and not list(gold.glob(".*.tmp"))
     lines = [json.loads(x) for x in (gold / ".review_log.jsonl").read_text(encoding="utf-8").splitlines()]
     assert len(lines) == 1
@@ -339,7 +339,7 @@ def test_api_flow(server):
 
 def test_api_errors(server, env):
     srv, _ = server
-    data, gold = env
+    data, _gold = env
     s, _, e = call(srv, "POST", "/api/answer", {"doc": "ZH_100", "field": "justification", "verdict": "wrong",
                                                 "reviewer": "A", "lang": "it"})
     assert s == 400 and e["error"] == STRINGS["it"]["err.gold_required"]
@@ -368,10 +368,10 @@ def test_api_errors(server, env):
 
 def test_end_to_end(server, env):
     srv, _ = server
-    data, gold = env
+    _data, gold = env
     n = 0
     while True:
-        s, _, q = call(srv, "GET", "/api/question?reviewer=Anna&lang=it")
+        _s, _, q = call(srv, "GET", "/api/question?reviewer=Anna&lang=it")
         if q.get("done"):
             break
         verdict = "not_in_document" if q["kind"] == "presence" else "correct"
@@ -481,7 +481,7 @@ def test_concurrent_render_and_blocks(server):
     def work(i):
         for j in range(5):
             if (i + j) % 2:
-                p = "/api/page?doc=ZH_100&page=%d&scale=1" % (1 + j % 2)
+                p = f"/api/page?doc=ZH_100&page={1 + j % 2}&scale=1"
             else:
                 p = "/api/blocks?doc=ZH_100&page=1"
             st = call(srv, "GET", p)[0]
@@ -525,9 +525,9 @@ def test_unknown_block_skipped_without_parsed(server, env):
 
 def test_clean_reviewer():
     from openparl_extract.review.app import ApiError, clean_reviewer
-    assert clean_reviewer("  Anna‮\u200b ") == "Anna"
-    assert clean_reviewer("Bo⁦b") == "Bob"
-    for bad in ("‮\u200b", "   ", None):
+    assert clean_reviewer("  Anna\u202e\u200b ") == "Anna"
+    assert clean_reviewer("Bo\u2066b") == "Bob"
+    for bad in ("\u202e\u200b", "   ", None):
         with pytest.raises(ApiError):
             clean_reviewer(bad)
 

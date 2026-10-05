@@ -43,7 +43,7 @@ def _convert(path: Path, ocr: bool):
 def parse_pdf(path: Path, ocr: bool | None = None) -> ParsedDoc:
     path = Path(path)
     scanned, n_pages = _is_scanned(path)
-    base = dict(source_file=path.name, page_count=n_pages, is_scanned=scanned)
+    base = {"source_file": path.name, "page_count": n_pages, "is_scanned": scanned}
     try:
         doc = _convert(path, scanned if ocr is None else ocr)
     except Exception as e:

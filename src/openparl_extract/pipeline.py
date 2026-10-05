@@ -85,7 +85,7 @@ def ingest(client: OpenParlDataClient, data: Path, ids: list[str] | None = None,
                 d = ingest_affair(client, aid, raw)
                 key, s.done = (d.parent.name, d.name), s.done + 1
             s.keys.append(key)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  (logged to errors.jsonl, run continues)
             log_error(data, ("", aid), "ingest", e)
             s.failed += 1
     if s.done or not (raw / "bodies.json").exists():
@@ -107,7 +107,7 @@ def ingest_corpus(client: OpenParlDataClient, data: Path, entries: list, force: 
                 d = ingest_affair(client, aid, raw, primary_doc_id=e.doc_id)
                 key, s.done = (d.parent.name, d.name), s.done + 1
             s.keys.append(key)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001  (logged to errors.jsonl, run continues)
             log_error(data, (e.body_key, aid), "ingest", ex)
             s.failed += 1
     if s.done or not (raw / "bodies.json").exists():
@@ -201,7 +201,7 @@ def run_stage(data: Path, stage: str, keys: list[Key], force: bool = False, **kw
             continue
         try:
             wrote = RUNNERS[stage](data, key, out, **kw)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001  (logged to errors.jsonl, run continues)
             log_error(data, key, stage, e)
             s.failed += 1
             continue
