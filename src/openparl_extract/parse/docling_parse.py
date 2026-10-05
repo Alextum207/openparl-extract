@@ -1,4 +1,5 @@
 """Docling glue: PDF -> ParsedDoc with stable block IDs p{page}_b{index}."""
+import functools
 import logging
 from pathlib import Path
 
@@ -25,14 +26,18 @@ def _is_scanned(path: Path) -> tuple[bool, int]:
     return (n == 0 or chars / n < SCANNED_CHARS_PER_PAGE), n
 
 
-def _convert(path: Path, ocr: bool):
+@functools.lru_cache(maxsize=2)
+def _converter(ocr: bool):  # one per ocr flag: building it reloads all models (~seconds per PDF)
     from docling.datamodel.base_models import InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     from docling.document_converter import DocumentConverter, PdfFormatOption
     truststore.inject_into_ssl()  # HF model download behind Windows cert store
     opts = PdfPipelineOptions(do_ocr=ocr)
-    conv = DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)})
-    return conv.convert(str(path)).document
+    return DocumentConverter(format_options={InputFormat.PDF: PdfFormatOption(pipeline_options=opts)})
+
+
+def _convert(path: Path, ocr: bool):
+    return _converter(ocr).convert(str(path)).document
 
 
 def parse_pdf(path: Path, ocr: bool | None = None) -> ParsedDoc:
