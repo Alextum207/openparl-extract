@@ -99,6 +99,13 @@ class Handler(BaseHTTPRequestHandler):
         q = {k: v[0] for k, v in parse_qs(u.query).items()}
         body: dict = {}
         port = self.server.server_address[1]
+        # consume the body before any early rejection: closing with unread data makes Windows reset the connection
+        # before the client can read the 403/415
+        try:
+            declared = int(self.headers.get("Content-Length") or 0)
+        except ValueError:
+            declared = 0
+        payload = self.rfile.read(declared) if method == "POST" and 0 < declared <= MAX_BODY else b""
         # DNS-rebinding / CSRF guard: only our own origin may talk to us
         if self.headers.get("Host") not in (f"127.0.0.1:{port}", f"localhost:{port}") or self.headers.get(
                 "Origin") not in (None, f"http://127.0.0.1:{port}", f"http://localhost:{port}"):
@@ -110,10 +117,10 @@ class Handler(BaseHTTPRequestHandler):
                 n = int(self.headers.get("Content-Length") or 0)
                 if not 0 <= n <= MAX_BODY:
                     raise ValueError
-                body = json.loads(self.rfile.read(n) or b"{}")
+                body = json.loads(payload or b"{}")
                 if not isinstance(body, dict):
-                    raise ValueError
-            except ValueError:
+                    raise TypeError
+            except (ValueError, TypeError):
                 return self._json({"error": t(q.get("lang", self.server.lang_default), "err.bad_request")}, 400)
         lang = str(body.get("lang") or q.get("lang") or self.server.lang_default)
         try:
@@ -123,7 +130,7 @@ class Handler(BaseHTTPRequestHandler):
         except ReviewError as e:
             self._json({"error": t(lang, e.key)},
                        409 if e.key == "err.undo_conflict" else 404 if method == "GET" else 400)
-        except Exception as e:  # never leak a traceback to the client
+        except Exception as e:  # noqa: BLE001  never leak a traceback to the client
             print(f"review app: {type(e).__name__}: {e}", file=sys.stderr)
             self._json({"error": t(lang, "err.server")}, 500)
 
